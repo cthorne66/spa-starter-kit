@@ -26811,10 +26811,11 @@ define("angular", (function (global) {
       throw $TypeError();
     return $Object(x);
   }
-  function assertObject(x) {
-    if (!isObject(x))
-      throw $TypeError(x + ' is not an Object');
-    return x;
+  function checkObjectCoercible(argument) {
+    if (argument == null) {
+      throw new TypeError('Value cannot be converted to an Object');
+    }
+    return argument;
   }
   function setupGlobals(global) {
     global.Symbol = Symbol;
@@ -26824,7 +26825,6 @@ define("angular", (function (global) {
   }
   setupGlobals(global);
   global.$traceurRuntime = {
-    assertObject: assertObject,
     createPrivateName: createPrivateName,
     exportStar: exportStar,
     getOwnHashObject: getOwnHashObject,
@@ -26836,6 +26836,10 @@ define("angular", (function (global) {
     toProperty: toProperty,
     type: types,
     typeof: typeOf,
+    checkObjectCoercible: checkObjectCoercible,
+    hasOwnProperty: function(o, p) {
+      return hasOwnProperty.call(o, p);
+    },
     defineProperties: $defineProperties,
     defineProperty: $defineProperty,
     getOwnPropertyDescriptor: $getOwnPropertyDescriptor,
@@ -26850,10 +26854,7 @@ define("angular", (function (global) {
         j = 0,
         iterResult;
     for (var i = 0; i < arguments.length; i++) {
-      var valueToSpread = arguments[i];
-      if (!$traceurRuntime.isObject(valueToSpread)) {
-        throw new TypeError('Cannot spread non-object.');
-      }
+      var valueToSpread = $traceurRuntime.checkObjectCoercible(arguments[i]);
       if (typeof valueToSpread[$traceurRuntime.toProperty(Symbol.iterator)] !== 'function') {
         throw new TypeError('Cannot spread non-iterable object.');
       }
@@ -26945,7 +26946,7 @@ define("angular", (function (global) {
     }
     if (superClass === null)
       return null;
-    throw new $TypeError('Super expression must either be null or a function');
+    throw new $TypeError(("Super expression must either be null or a function, not " + typeof superClass + "."));
   }
   function defaultSuperCall(self, homeObject, args) {
     if ($getPrototypeOf(homeObject) !== null)
@@ -27307,7 +27308,7 @@ define("angular", (function (global) {
 })();
 (function(global) {
   
-  var $__2 = $traceurRuntime.assertObject($traceurRuntime),
+  var $__2 = $traceurRuntime,
       canonicalizeUrl = $__2.canonicalizeUrl,
       resolveUrl = $__2.resolveUrl,
       isAbsolute = $__2.isAbsolute;
@@ -27476,9 +27477,9 @@ define("angular", (function (global) {
     return instantiator && instantiator.getUncoatedModule();
   };
 })(typeof global !== 'undefined' ? global : this);
-System.register("traceur-runtime@0.0.53/src/runtime/polyfills/utils", [], function() {
+System.register("traceur-runtime@0.0.58/src/runtime/polyfills/utils", [], function() {
   
-  var __moduleName = "traceur-runtime@0.0.53/src/runtime/polyfills/utils";
+  var __moduleName = "traceur-runtime@0.0.58/src/runtime/polyfills/utils";
   var $ceil = Math.ceil;
   var $floor = Math.floor;
   var $isFinite = isFinite;
@@ -27517,6 +27518,68 @@ System.register("traceur-runtime@0.0.53/src/runtime/polyfills/utils", [], functi
   function isConstructor(x) {
     return isCallable(x);
   }
+  function createIteratorResultObject(value, done) {
+    return {
+      value: value,
+      done: done
+    };
+  }
+  function maybeDefine(object, name, descr) {
+    if (!(name in object)) {
+      Object.defineProperty(object, name, descr);
+    }
+  }
+  function maybeDefineMethod(object, name, value) {
+    maybeDefine(object, name, {
+      value: value,
+      configurable: true,
+      enumerable: false,
+      writable: true
+    });
+  }
+  function maybeDefineConst(object, name, value) {
+    maybeDefine(object, name, {
+      value: value,
+      configurable: false,
+      enumerable: false,
+      writable: false
+    });
+  }
+  function maybeAddFunctions(object, functions) {
+    for (var i = 0; i < functions.length; i += 2) {
+      var name = functions[i];
+      var value = functions[i + 1];
+      maybeDefineMethod(object, name, value);
+    }
+  }
+  function maybeAddConsts(object, consts) {
+    for (var i = 0; i < consts.length; i += 2) {
+      var name = consts[i];
+      var value = consts[i + 1];
+      maybeDefineConst(object, name, value);
+    }
+  }
+  function maybeAddIterator(object, func, Symbol) {
+    if (!Symbol || !Symbol.iterator || object[Symbol.iterator])
+      return;
+    if (object['@@iterator'])
+      func = object['@@iterator'];
+    Object.defineProperty(object, Symbol.iterator, {
+      value: func,
+      configurable: true,
+      enumerable: false,
+      writable: true
+    });
+  }
+  var polyfills = [];
+  function registerPolyfill(func) {
+    polyfills.push(func);
+  }
+  function polyfillAll(global) {
+    polyfills.forEach((function(f) {
+      return f(global);
+    }));
+  }
   return {
     get toObject() {
       return toObject;
@@ -27544,198 +27607,43 @@ System.register("traceur-runtime@0.0.53/src/runtime/polyfills/utils", [], functi
     },
     get isConstructor() {
       return isConstructor;
+    },
+    get createIteratorResultObject() {
+      return createIteratorResultObject;
+    },
+    get maybeDefine() {
+      return maybeDefine;
+    },
+    get maybeDefineMethod() {
+      return maybeDefineMethod;
+    },
+    get maybeDefineConst() {
+      return maybeDefineConst;
+    },
+    get maybeAddFunctions() {
+      return maybeAddFunctions;
+    },
+    get maybeAddConsts() {
+      return maybeAddConsts;
+    },
+    get maybeAddIterator() {
+      return maybeAddIterator;
+    },
+    get registerPolyfill() {
+      return registerPolyfill;
+    },
+    get polyfillAll() {
+      return polyfillAll;
     }
   };
 });
-System.register("traceur-runtime@0.0.53/src/runtime/polyfills/Array", [], function() {
+System.register("traceur-runtime@0.0.58/src/runtime/polyfills/Map", [], function() {
   
-  var __moduleName = "traceur-runtime@0.0.53/src/runtime/polyfills/Array";
-  var $__3 = System.get("traceur-runtime@0.0.53/src/runtime/polyfills/utils"),
-      isCallable = $__3.isCallable,
-      isConstructor = $__3.isConstructor,
-      checkIterable = $__3.checkIterable,
-      toInteger = $__3.toInteger,
-      toLength = $__3.toLength,
-      toObject = $__3.toObject;
-  function from(arrLike) {
-    var mapFn = arguments[1];
-    var thisArg = arguments[2];
-    var C = this;
-    var items = toObject(arrLike);
-    var mapping = mapFn !== undefined;
-    var k = 0;
-    var arr,
-        len;
-    if (mapping && !isCallable(mapFn)) {
-      throw TypeError();
-    }
-    if (checkIterable(items)) {
-      arr = isConstructor(C) ? new C() : [];
-      for (var $__4 = items[Symbol.iterator](),
-          $__5; !($__5 = $__4.next()).done; ) {
-        var item = $__5.value;
-        {
-          if (mapping) {
-            arr[k] = mapFn.call(thisArg, item, k);
-          } else {
-            arr[k] = item;
-          }
-          k++;
-        }
-      }
-      arr.length = k;
-      return arr;
-    }
-    len = toLength(items.length);
-    arr = isConstructor(C) ? new C(len) : new Array(len);
-    for (; k < len; k++) {
-      if (mapping) {
-        arr[k] = mapFn.call(thisArg, items[k], k);
-      } else {
-        arr[k] = items[k];
-      }
-    }
-    arr.length = len;
-    return arr;
-  }
-  function fill(value) {
-    var start = arguments[1] !== (void 0) ? arguments[1] : 0;
-    var end = arguments[2];
-    var object = toObject(this);
-    var len = toLength(object.length);
-    var fillStart = toInteger(start);
-    var fillEnd = end !== undefined ? toInteger(end) : len;
-    fillStart = fillStart < 0 ? Math.max(len + fillStart, 0) : Math.min(fillStart, len);
-    fillEnd = fillEnd < 0 ? Math.max(len + fillEnd, 0) : Math.min(fillEnd, len);
-    while (fillStart < fillEnd) {
-      object[fillStart] = value;
-      fillStart++;
-    }
-    return object;
-  }
-  function find(predicate) {
-    var thisArg = arguments[1];
-    return findHelper(this, predicate, thisArg);
-  }
-  function findIndex(predicate) {
-    var thisArg = arguments[1];
-    return findHelper(this, predicate, thisArg, true);
-  }
-  function findHelper(self, predicate) {
-    var thisArg = arguments[2];
-    var returnIndex = arguments[3] !== (void 0) ? arguments[3] : false;
-    var object = toObject(self);
-    var len = toLength(object.length);
-    if (!isCallable(predicate)) {
-      throw TypeError();
-    }
-    for (var i = 0; i < len; i++) {
-      if (i in object) {
-        var value = object[i];
-        if (predicate.call(thisArg, value, i, object)) {
-          return returnIndex ? i : value;
-        }
-      }
-    }
-    return returnIndex ? -1 : undefined;
-  }
-  return {
-    get from() {
-      return from;
-    },
-    get fill() {
-      return fill;
-    },
-    get find() {
-      return find;
-    },
-    get findIndex() {
-      return findIndex;
-    }
-  };
-});
-System.register("traceur-runtime@0.0.53/src/runtime/polyfills/ArrayIterator", [], function() {
-  
-  var $__8;
-  var __moduleName = "traceur-runtime@0.0.53/src/runtime/polyfills/ArrayIterator";
-  var $__6 = System.get("traceur-runtime@0.0.53/src/runtime/polyfills/utils"),
-      toObject = $__6.toObject,
-      toUint32 = $__6.toUint32;
-  var ARRAY_ITERATOR_KIND_KEYS = 1;
-  var ARRAY_ITERATOR_KIND_VALUES = 2;
-  var ARRAY_ITERATOR_KIND_ENTRIES = 3;
-  var ArrayIterator = function ArrayIterator() {};
-  ($traceurRuntime.createClass)(ArrayIterator, ($__8 = {}, Object.defineProperty($__8, "next", {
-    value: function() {
-      var iterator = toObject(this);
-      var array = iterator.iteratorObject_;
-      if (!array) {
-        throw new TypeError('Object is not an ArrayIterator');
-      }
-      var index = iterator.arrayIteratorNextIndex_;
-      var itemKind = iterator.arrayIterationKind_;
-      var length = toUint32(array.length);
-      if (index >= length) {
-        iterator.arrayIteratorNextIndex_ = Infinity;
-        return createIteratorResultObject(undefined, true);
-      }
-      iterator.arrayIteratorNextIndex_ = index + 1;
-      if (itemKind == ARRAY_ITERATOR_KIND_VALUES)
-        return createIteratorResultObject(array[index], false);
-      if (itemKind == ARRAY_ITERATOR_KIND_ENTRIES)
-        return createIteratorResultObject([index, array[index]], false);
-      return createIteratorResultObject(index, false);
-    },
-    configurable: true,
-    enumerable: true,
-    writable: true
-  }), Object.defineProperty($__8, Symbol.iterator, {
-    value: function() {
-      return this;
-    },
-    configurable: true,
-    enumerable: true,
-    writable: true
-  }), $__8), {});
-  function createArrayIterator(array, kind) {
-    var object = toObject(array);
-    var iterator = new ArrayIterator;
-    iterator.iteratorObject_ = object;
-    iterator.arrayIteratorNextIndex_ = 0;
-    iterator.arrayIterationKind_ = kind;
-    return iterator;
-  }
-  function createIteratorResultObject(value, done) {
-    return {
-      value: value,
-      done: done
-    };
-  }
-  function entries() {
-    return createArrayIterator(this, ARRAY_ITERATOR_KIND_ENTRIES);
-  }
-  function keys() {
-    return createArrayIterator(this, ARRAY_ITERATOR_KIND_KEYS);
-  }
-  function values() {
-    return createArrayIterator(this, ARRAY_ITERATOR_KIND_VALUES);
-  }
-  return {
-    get entries() {
-      return entries;
-    },
-    get keys() {
-      return keys;
-    },
-    get values() {
-      return values;
-    }
-  };
-});
-System.register("traceur-runtime@0.0.53/src/runtime/polyfills/Map", [], function() {
-  
-  var __moduleName = "traceur-runtime@0.0.53/src/runtime/polyfills/Map";
-  var isObject = System.get("traceur-runtime@0.0.53/src/runtime/polyfills/utils").isObject;
+  var __moduleName = "traceur-runtime@0.0.58/src/runtime/polyfills/Map";
+  var $__3 = System.get("traceur-runtime@0.0.58/src/runtime/polyfills/utils"),
+      isObject = $__3.isObject,
+      maybeAddIterator = $__3.maybeAddIterator,
+      registerPolyfill = $__3.registerPolyfill;
   var getOwnHashObject = $traceurRuntime.getOwnHashObject;
   var $hasOwnProperty = Object.prototype.hasOwnProperty;
   var deletedSentinel = {};
@@ -27764,11 +27672,11 @@ System.register("traceur-runtime@0.0.53/src/runtime/polyfills/Map", [], function
     }
     initMap(this);
     if (iterable !== null && iterable !== undefined) {
-      for (var $__11 = iterable[Symbol.iterator](),
-          $__12; !($__12 = $__11.next()).done; ) {
-        var $__13 = $traceurRuntime.assertObject($__12.value),
-            key = $__13[0],
-            value = $__13[1];
+      for (var $__5 = iterable[Symbol.iterator](),
+          $__6; !($__6 = $__5.next()).done; ) {
+        var $__7 = $__6.value,
+            key = $__7[0],
+            value = $__7[1];
         {
           this.set(key, value);
         }
@@ -27847,7 +27755,7 @@ System.register("traceur-runtime@0.0.53/src/runtime/polyfills/Map", [], function
         callbackFn.call(thisArg, value, key, this);
       }
     },
-    entries: $traceurRuntime.initGeneratorFunction(function $__14() {
+    entries: $traceurRuntime.initGeneratorFunction(function $__8() {
       var i,
           len,
           key,
@@ -27884,9 +27792,9 @@ System.register("traceur-runtime@0.0.53/src/runtime/polyfills/Map", [], function
             default:
               return $ctx.end();
           }
-      }, $__14, this);
+      }, $__8, this);
     }),
-    keys: $traceurRuntime.initGeneratorFunction(function $__15() {
+    keys: $traceurRuntime.initGeneratorFunction(function $__9() {
       var i,
           len,
           key,
@@ -27923,9 +27831,9 @@ System.register("traceur-runtime@0.0.53/src/runtime/polyfills/Map", [], function
             default:
               return $ctx.end();
           }
-      }, $__15, this);
+      }, $__9, this);
     }),
-    values: $traceurRuntime.initGeneratorFunction(function $__16() {
+    values: $traceurRuntime.initGeneratorFunction(function $__10() {
       var i,
           len,
           key,
@@ -27962,7 +27870,7 @@ System.register("traceur-runtime@0.0.53/src/runtime/polyfills/Map", [], function
             default:
               return $ctx.end();
           }
-      }, $__16, this);
+      }, $__10, this);
     })
   }, {});
   Object.defineProperty(Map.prototype, Symbol.iterator, {
@@ -27970,136 +27878,196 @@ System.register("traceur-runtime@0.0.53/src/runtime/polyfills/Map", [], function
     writable: true,
     value: Map.prototype.entries
   });
-  return {get Map() {
-      return Map;
-    }};
-});
-System.register("traceur-runtime@0.0.53/src/runtime/polyfills/Number", [], function() {
-  
-  var __moduleName = "traceur-runtime@0.0.53/src/runtime/polyfills/Number";
-  var $__17 = System.get("traceur-runtime@0.0.53/src/runtime/polyfills/utils"),
-      isNumber = $__17.isNumber,
-      toInteger = $__17.toInteger;
-  var $abs = Math.abs;
-  var $isFinite = isFinite;
-  var $isNaN = isNaN;
-  var MAX_SAFE_INTEGER = Math.pow(2, 53) - 1;
-  var MIN_SAFE_INTEGER = -Math.pow(2, 53) + 1;
-  var EPSILON = Math.pow(2, -52);
-  function NumberIsFinite(number) {
-    return isNumber(number) && $isFinite(number);
-  }
-  ;
-  function isInteger(number) {
-    return NumberIsFinite(number) && toInteger(number) === number;
-  }
-  function NumberIsNaN(number) {
-    return isNumber(number) && $isNaN(number);
-  }
-  ;
-  function isSafeInteger(number) {
-    if (NumberIsFinite(number)) {
-      var integral = toInteger(number);
-      if (integral === number)
-        return $abs(integral) <= MAX_SAFE_INTEGER;
+  function polyfillMap(global) {
+    var $__7 = global,
+        Object = $__7.Object,
+        Symbol = $__7.Symbol;
+    if (!global.Map)
+      global.Map = Map;
+    var mapPrototype = global.Map.prototype;
+    if (mapPrototype.entries) {
+      maybeAddIterator(mapPrototype, mapPrototype.entries, Symbol);
+      maybeAddIterator(Object.getPrototypeOf(new global.Map().entries()), function() {
+        return this;
+      }, Symbol);
     }
-    return false;
   }
+  registerPolyfill(polyfillMap);
   return {
-    get MAX_SAFE_INTEGER() {
-      return MAX_SAFE_INTEGER;
+    get Map() {
+      return Map;
     },
-    get MIN_SAFE_INTEGER() {
-      return MIN_SAFE_INTEGER;
-    },
-    get EPSILON() {
-      return EPSILON;
-    },
-    get isFinite() {
-      return NumberIsFinite;
-    },
-    get isInteger() {
-      return isInteger;
-    },
-    get isNaN() {
-      return NumberIsNaN;
-    },
-    get isSafeInteger() {
-      return isSafeInteger;
+    get polyfillMap() {
+      return polyfillMap;
     }
   };
 });
-System.register("traceur-runtime@0.0.53/src/runtime/polyfills/Object", [], function() {
+System.get("traceur-runtime@0.0.58/src/runtime/polyfills/Map" + '');
+System.register("traceur-runtime@0.0.58/src/runtime/polyfills/Set", [], function() {
   
-  var __moduleName = "traceur-runtime@0.0.53/src/runtime/polyfills/Object";
-  var $__18 = $traceurRuntime.assertObject($traceurRuntime),
-      defineProperty = $__18.defineProperty,
-      getOwnPropertyDescriptor = $__18.getOwnPropertyDescriptor,
-      getOwnPropertyNames = $__18.getOwnPropertyNames,
-      keys = $__18.keys,
-      privateNames = $__18.privateNames;
-  function is(left, right) {
-    if (left === right)
-      return left !== 0 || 1 / left === 1 / right;
-    return left !== left && right !== right;
+  var __moduleName = "traceur-runtime@0.0.58/src/runtime/polyfills/Set";
+  var $__11 = System.get("traceur-runtime@0.0.58/src/runtime/polyfills/utils"),
+      isObject = $__11.isObject,
+      maybeAddIterator = $__11.maybeAddIterator,
+      registerPolyfill = $__11.registerPolyfill;
+  var Map = System.get("traceur-runtime@0.0.58/src/runtime/polyfills/Map").Map;
+  var getOwnHashObject = $traceurRuntime.getOwnHashObject;
+  var $hasOwnProperty = Object.prototype.hasOwnProperty;
+  function initSet(set) {
+    set.map_ = new Map();
   }
-  function assign(target) {
-    for (var i = 1; i < arguments.length; i++) {
-      var source = arguments[i];
-      var props = keys(source);
-      var p,
-          length = props.length;
-      for (p = 0; p < length; p++) {
-        var name = props[p];
-        if (privateNames[name])
-          continue;
-        target[name] = source[name];
+  var Set = function Set() {
+    var iterable = arguments[0];
+    if (!isObject(this))
+      throw new TypeError('Set called on incompatible type');
+    if ($hasOwnProperty.call(this, 'map_')) {
+      throw new TypeError('Set can not be reentrantly initialised');
+    }
+    initSet(this);
+    if (iterable !== null && iterable !== undefined) {
+      for (var $__15 = iterable[Symbol.iterator](),
+          $__16; !($__16 = $__15.next()).done; ) {
+        var item = $__16.value;
+        {
+          this.add(item);
+        }
       }
     }
-    return target;
-  }
-  function mixin(target, source) {
-    var props = getOwnPropertyNames(source);
-    var p,
-        descriptor,
-        length = props.length;
-    for (p = 0; p < length; p++) {
-      var name = props[p];
-      if (privateNames[name])
-        continue;
-      descriptor = getOwnPropertyDescriptor(source, props[p]);
-      defineProperty(target, props[p], descriptor);
+  };
+  ($traceurRuntime.createClass)(Set, {
+    get size() {
+      return this.map_.size;
+    },
+    has: function(key) {
+      return this.map_.has(key);
+    },
+    add: function(key) {
+      return this.map_.set(key, key);
+    },
+    delete: function(key) {
+      return this.map_.delete(key);
+    },
+    clear: function() {
+      return this.map_.clear();
+    },
+    forEach: function(callbackFn) {
+      var thisArg = arguments[1];
+      var $__13 = this;
+      return this.map_.forEach((function(value, key) {
+        callbackFn.call(thisArg, key, key, $__13);
+      }));
+    },
+    values: $traceurRuntime.initGeneratorFunction(function $__18() {
+      var $__19,
+          $__20;
+      return $traceurRuntime.createGeneratorInstance(function($ctx) {
+        while (true)
+          switch ($ctx.state) {
+            case 0:
+              $__19 = this.map_.keys()[Symbol.iterator]();
+              $ctx.sent = void 0;
+              $ctx.action = 'next';
+              $ctx.state = 12;
+              break;
+            case 12:
+              $__20 = $__19[$ctx.action]($ctx.sentIgnoreThrow);
+              $ctx.state = 9;
+              break;
+            case 9:
+              $ctx.state = ($__20.done) ? 3 : 2;
+              break;
+            case 3:
+              $ctx.sent = $__20.value;
+              $ctx.state = -2;
+              break;
+            case 2:
+              $ctx.state = 12;
+              return $__20.value;
+            default:
+              return $ctx.end();
+          }
+      }, $__18, this);
+    }),
+    entries: $traceurRuntime.initGeneratorFunction(function $__21() {
+      var $__22,
+          $__23;
+      return $traceurRuntime.createGeneratorInstance(function($ctx) {
+        while (true)
+          switch ($ctx.state) {
+            case 0:
+              $__22 = this.map_.entries()[Symbol.iterator]();
+              $ctx.sent = void 0;
+              $ctx.action = 'next';
+              $ctx.state = 12;
+              break;
+            case 12:
+              $__23 = $__22[$ctx.action]($ctx.sentIgnoreThrow);
+              $ctx.state = 9;
+              break;
+            case 9:
+              $ctx.state = ($__23.done) ? 3 : 2;
+              break;
+            case 3:
+              $ctx.sent = $__23.value;
+              $ctx.state = -2;
+              break;
+            case 2:
+              $ctx.state = 12;
+              return $__23.value;
+            default:
+              return $ctx.end();
+          }
+      }, $__21, this);
+    })
+  }, {});
+  Object.defineProperty(Set.prototype, Symbol.iterator, {
+    configurable: true,
+    writable: true,
+    value: Set.prototype.values
+  });
+  Object.defineProperty(Set.prototype, 'keys', {
+    configurable: true,
+    writable: true,
+    value: Set.prototype.values
+  });
+  function polyfillSet(global) {
+    var $__17 = global,
+        Object = $__17.Object,
+        Symbol = $__17.Symbol;
+    if (!global.Set)
+      global.Set = Set;
+    var setPrototype = global.Set.prototype;
+    if (setPrototype.values) {
+      maybeAddIterator(setPrototype, setPrototype.values, Symbol);
+      maybeAddIterator(Object.getPrototypeOf(new global.Set().values()), function() {
+        return this;
+      }, Symbol);
     }
-    return target;
   }
+  registerPolyfill(polyfillSet);
   return {
-    get is() {
-      return is;
+    get Set() {
+      return Set;
     },
-    get assign() {
-      return assign;
-    },
-    get mixin() {
-      return mixin;
+    get polyfillSet() {
+      return polyfillSet;
     }
   };
 });
-System.register("traceur-runtime@0.0.53/node_modules/rsvp/lib/rsvp/asap", [], function() {
+System.get("traceur-runtime@0.0.58/src/runtime/polyfills/Set" + '');
+System.register("traceur-runtime@0.0.58/node_modules/rsvp/lib/rsvp/asap", [], function() {
   
-  var __moduleName = "traceur-runtime@0.0.53/node_modules/rsvp/lib/rsvp/asap";
-  var length = 0;
+  var __moduleName = "traceur-runtime@0.0.58/node_modules/rsvp/lib/rsvp/asap";
   function asap(callback, arg) {
-    queue[length] = callback;
-    queue[length + 1] = arg;
-    length += 2;
-    if (length === 2) {
+    var length = queue.push([callback, arg]);
+    if (length === 1) {
       scheduleFlush();
     }
   }
   var $__default = asap;
+  ;
   var browserGlobal = (typeof window !== 'undefined') ? window : {};
   var BrowserMutationObserver = browserGlobal.MutationObserver || browserGlobal.WebKitMutationObserver;
-  var isWorker = typeof Uint8ClampedArray !== 'undefined' && typeof importScripts !== 'undefined' && typeof MessageChannel !== 'undefined';
   function useNextTick() {
     return function() {
       process.nextTick(flush);
@@ -28114,36 +28082,26 @@ System.register("traceur-runtime@0.0.53/node_modules/rsvp/lib/rsvp/asap", [], fu
       node.data = (iterations = ++iterations % 2);
     };
   }
-  function useMessageChannel() {
-    var channel = new MessageChannel();
-    channel.port1.onmessage = flush;
-    return function() {
-      channel.port2.postMessage(0);
-    };
-  }
   function useSetTimeout() {
     return function() {
       setTimeout(flush, 1);
     };
   }
-  var queue = new Array(1000);
+  var queue = [];
   function flush() {
-    for (var i = 0; i < length; i += 2) {
-      var callback = queue[i];
-      var arg = queue[i + 1];
+    for (var i = 0; i < queue.length; i++) {
+      var tuple = queue[i];
+      var callback = tuple[0],
+          arg = tuple[1];
       callback(arg);
-      queue[i] = undefined;
-      queue[i + 1] = undefined;
     }
-    length = 0;
+    queue = [];
   }
   var scheduleFlush;
   if (typeof process !== 'undefined' && {}.toString.call(process) === '[object process]') {
     scheduleFlush = useNextTick();
   } else if (BrowserMutationObserver) {
     scheduleFlush = useMutationObserver();
-  } else if (isWorker) {
-    scheduleFlush = useMessageChannel();
   } else {
     scheduleFlush = useSetTimeout();
   }
@@ -28151,10 +28109,11 @@ System.register("traceur-runtime@0.0.53/node_modules/rsvp/lib/rsvp/asap", [], fu
       return $__default;
     }};
 });
-System.register("traceur-runtime@0.0.53/src/runtime/polyfills/Promise", [], function() {
+System.register("traceur-runtime@0.0.58/src/runtime/polyfills/Promise", [], function() {
   
-  var __moduleName = "traceur-runtime@0.0.53/src/runtime/polyfills/Promise";
-  var async = System.get("traceur-runtime@0.0.53/node_modules/rsvp/lib/rsvp/asap").default;
+  var __moduleName = "traceur-runtime@0.0.58/src/runtime/polyfills/Promise";
+  var async = System.get("traceur-runtime@0.0.58/node_modules/rsvp/lib/rsvp/asap").default;
+  var registerPolyfill = System.get("traceur-runtime@0.0.58/src/runtime/polyfills/utils").registerPolyfill;
   var promiseRaw = {};
   function isPromise(x) {
     return x && typeof x === 'object' && x.status_ !== undefined;
@@ -28384,141 +28343,95 @@ System.register("traceur-runtime@0.0.53/src/runtime/polyfills/Promise", [], func
     }
     return x;
   }
-  return {get Promise() {
-      return Promise;
-    }};
-});
-System.register("traceur-runtime@0.0.53/src/runtime/polyfills/Set", [], function() {
-  
-  var __moduleName = "traceur-runtime@0.0.53/src/runtime/polyfills/Set";
-  var isObject = System.get("traceur-runtime@0.0.53/src/runtime/polyfills/utils").isObject;
-  var Map = System.get("traceur-runtime@0.0.53/src/runtime/polyfills/Map").Map;
-  var getOwnHashObject = $traceurRuntime.getOwnHashObject;
-  var $hasOwnProperty = Object.prototype.hasOwnProperty;
-  function initSet(set) {
-    set.map_ = new Map();
+  function polyfillPromise(global) {
+    if (!global.Promise)
+      global.Promise = Promise;
   }
-  var Set = function Set() {
-    var iterable = arguments[0];
-    if (!isObject(this))
-      throw new TypeError('Set called on incompatible type');
-    if ($hasOwnProperty.call(this, 'map_')) {
-      throw new TypeError('Set can not be reentrantly initialised');
-    }
-    initSet(this);
-    if (iterable !== null && iterable !== undefined) {
-      for (var $__25 = iterable[Symbol.iterator](),
-          $__26; !($__26 = $__25.next()).done; ) {
-        var item = $__26.value;
-        {
-          this.add(item);
-        }
-      }
+  registerPolyfill(polyfillPromise);
+  return {
+    get Promise() {
+      return Promise;
+    },
+    get polyfillPromise() {
+      return polyfillPromise;
     }
   };
-  ($traceurRuntime.createClass)(Set, {
-    get size() {
-      return this.map_.size;
+});
+System.get("traceur-runtime@0.0.58/src/runtime/polyfills/Promise" + '');
+System.register("traceur-runtime@0.0.58/src/runtime/polyfills/StringIterator", [], function() {
+  
+  var $__29;
+  var __moduleName = "traceur-runtime@0.0.58/src/runtime/polyfills/StringIterator";
+  var $__27 = System.get("traceur-runtime@0.0.58/src/runtime/polyfills/utils"),
+      createIteratorResultObject = $__27.createIteratorResultObject,
+      isObject = $__27.isObject;
+  var $__30 = $traceurRuntime,
+      hasOwnProperty = $__30.hasOwnProperty,
+      toProperty = $__30.toProperty;
+  var iteratedString = Symbol('iteratedString');
+  var stringIteratorNextIndex = Symbol('stringIteratorNextIndex');
+  var StringIterator = function StringIterator() {};
+  ($traceurRuntime.createClass)(StringIterator, ($__29 = {}, Object.defineProperty($__29, "next", {
+    value: function() {
+      var o = this;
+      if (!isObject(o) || !hasOwnProperty(o, iteratedString)) {
+        throw new TypeError('this must be a StringIterator object');
+      }
+      var s = o[toProperty(iteratedString)];
+      if (s === undefined) {
+        return createIteratorResultObject(undefined, true);
+      }
+      var position = o[toProperty(stringIteratorNextIndex)];
+      var len = s.length;
+      if (position >= len) {
+        o[toProperty(iteratedString)] = undefined;
+        return createIteratorResultObject(undefined, true);
+      }
+      var first = s.charCodeAt(position);
+      var resultString;
+      if (first < 0xD800 || first > 0xDBFF || position + 1 === len) {
+        resultString = String.fromCharCode(first);
+      } else {
+        var second = s.charCodeAt(position + 1);
+        if (second < 0xDC00 || second > 0xDFFF) {
+          resultString = String.fromCharCode(first);
+        } else {
+          resultString = String.fromCharCode(first) + String.fromCharCode(second);
+        }
+      }
+      o[toProperty(stringIteratorNextIndex)] = position + resultString.length;
+      return createIteratorResultObject(resultString, false);
     },
-    has: function(key) {
-      return this.map_.has(key);
-    },
-    add: function(key) {
-      return this.map_.set(key, key);
-    },
-    delete: function(key) {
-      return this.map_.delete(key);
-    },
-    clear: function() {
-      return this.map_.clear();
-    },
-    forEach: function(callbackFn) {
-      var thisArg = arguments[1];
-      var $__23 = this;
-      return this.map_.forEach((function(value, key) {
-        callbackFn.call(thisArg, key, key, $__23);
-      }));
-    },
-    values: $traceurRuntime.initGeneratorFunction(function $__27() {
-      var $__28,
-          $__29;
-      return $traceurRuntime.createGeneratorInstance(function($ctx) {
-        while (true)
-          switch ($ctx.state) {
-            case 0:
-              $__28 = this.map_.keys()[Symbol.iterator]();
-              $ctx.sent = void 0;
-              $ctx.action = 'next';
-              $ctx.state = 12;
-              break;
-            case 12:
-              $__29 = $__28[$ctx.action]($ctx.sentIgnoreThrow);
-              $ctx.state = 9;
-              break;
-            case 9:
-              $ctx.state = ($__29.done) ? 3 : 2;
-              break;
-            case 3:
-              $ctx.sent = $__29.value;
-              $ctx.state = -2;
-              break;
-            case 2:
-              $ctx.state = 12;
-              return $__29.value;
-            default:
-              return $ctx.end();
-          }
-      }, $__27, this);
-    }),
-    entries: $traceurRuntime.initGeneratorFunction(function $__30() {
-      var $__31,
-          $__32;
-      return $traceurRuntime.createGeneratorInstance(function($ctx) {
-        while (true)
-          switch ($ctx.state) {
-            case 0:
-              $__31 = this.map_.entries()[Symbol.iterator]();
-              $ctx.sent = void 0;
-              $ctx.action = 'next';
-              $ctx.state = 12;
-              break;
-            case 12:
-              $__32 = $__31[$ctx.action]($ctx.sentIgnoreThrow);
-              $ctx.state = 9;
-              break;
-            case 9:
-              $ctx.state = ($__32.done) ? 3 : 2;
-              break;
-            case 3:
-              $ctx.sent = $__32.value;
-              $ctx.state = -2;
-              break;
-            case 2:
-              $ctx.state = 12;
-              return $__32.value;
-            default:
-              return $ctx.end();
-          }
-      }, $__30, this);
-    })
-  }, {});
-  Object.defineProperty(Set.prototype, Symbol.iterator, {
     configurable: true,
-    writable: true,
-    value: Set.prototype.values
-  });
-  Object.defineProperty(Set.prototype, 'keys', {
+    enumerable: true,
+    writable: true
+  }), Object.defineProperty($__29, Symbol.iterator, {
+    value: function() {
+      return this;
+    },
     configurable: true,
-    writable: true,
-    value: Set.prototype.values
-  });
-  return {get Set() {
-      return Set;
+    enumerable: true,
+    writable: true
+  }), $__29), {});
+  function createStringIterator(string) {
+    var s = String(string);
+    var iterator = Object.create(StringIterator.prototype);
+    iterator[toProperty(iteratedString)] = s;
+    iterator[toProperty(stringIteratorNextIndex)] = 0;
+    return iterator;
+  }
+  return {get createStringIterator() {
+      return createStringIterator;
     }};
 });
-System.register("traceur-runtime@0.0.53/src/runtime/polyfills/String", [], function() {
+System.register("traceur-runtime@0.0.58/src/runtime/polyfills/String", [], function() {
   
-  var __moduleName = "traceur-runtime@0.0.53/src/runtime/polyfills/String";
+  var __moduleName = "traceur-runtime@0.0.58/src/runtime/polyfills/String";
+  var createStringIterator = System.get("traceur-runtime@0.0.58/src/runtime/polyfills/StringIterator").createStringIterator;
+  var $__32 = System.get("traceur-runtime@0.0.58/src/runtime/polyfills/utils"),
+      maybeAddFunctions = $__32.maybeAddFunctions,
+      maybeAddIterator = $__32.maybeAddIterator,
+      registerPolyfill = $__32.registerPolyfill;
   var $toString = Object.prototype.toString;
   var $indexOf = String.prototype.indexOf;
   var $lastIndexOf = String.prototype.lastIndexOf;
@@ -28663,6 +28576,18 @@ System.register("traceur-runtime@0.0.53/src/runtime/polyfills/String", [], funct
     }
     return String.fromCharCode.apply(null, codeUnits);
   }
+  function stringPrototypeIterator() {
+    var o = $traceurRuntime.checkObjectCoercible(this);
+    var s = String(o);
+    return createStringIterator(s);
+  }
+  function polyfillString(global) {
+    var String = global.String;
+    maybeAddFunctions(String.prototype, ['codePointAt', codePointAt, 'contains', contains, 'endsWith', endsWith, 'startsWith', startsWith, 'repeat', repeat]);
+    maybeAddFunctions(String, ['fromCodePoint', fromCodePoint, 'raw', raw]);
+    maybeAddIterator(String.prototype, stringPrototypeIterator, Symbol);
+  }
+  registerPolyfill(polyfillString);
   return {
     get startsWith() {
       return startsWith;
@@ -28684,158 +28609,384 @@ System.register("traceur-runtime@0.0.53/src/runtime/polyfills/String", [], funct
     },
     get fromCodePoint() {
       return fromCodePoint;
+    },
+    get stringPrototypeIterator() {
+      return stringPrototypeIterator;
+    },
+    get polyfillString() {
+      return polyfillString;
     }
   };
 });
-System.register("traceur-runtime@0.0.53/src/runtime/polyfills/polyfills", [], function() {
+System.get("traceur-runtime@0.0.58/src/runtime/polyfills/String" + '');
+System.register("traceur-runtime@0.0.58/src/runtime/polyfills/ArrayIterator", [], function() {
   
-  var __moduleName = "traceur-runtime@0.0.53/src/runtime/polyfills/polyfills";
-  var Map = System.get("traceur-runtime@0.0.53/src/runtime/polyfills/Map").Map;
-  var Set = System.get("traceur-runtime@0.0.53/src/runtime/polyfills/Set").Set;
-  var Promise = System.get("traceur-runtime@0.0.53/src/runtime/polyfills/Promise").Promise;
-  var $__36 = System.get("traceur-runtime@0.0.53/src/runtime/polyfills/String"),
-      codePointAt = $__36.codePointAt,
-      contains = $__36.contains,
-      endsWith = $__36.endsWith,
-      fromCodePoint = $__36.fromCodePoint,
-      repeat = $__36.repeat,
-      raw = $__36.raw,
-      startsWith = $__36.startsWith;
-  var $__37 = System.get("traceur-runtime@0.0.53/src/runtime/polyfills/Array"),
-      fill = $__37.fill,
-      find = $__37.find,
-      findIndex = $__37.findIndex,
-      from = $__37.from;
-  var $__38 = System.get("traceur-runtime@0.0.53/src/runtime/polyfills/ArrayIterator"),
-      entries = $__38.entries,
-      keys = $__38.keys,
-      values = $__38.values;
-  var $__39 = System.get("traceur-runtime@0.0.53/src/runtime/polyfills/Object"),
-      assign = $__39.assign,
-      is = $__39.is,
-      mixin = $__39.mixin;
-  var $__40 = System.get("traceur-runtime@0.0.53/src/runtime/polyfills/Number"),
-      MAX_SAFE_INTEGER = $__40.MAX_SAFE_INTEGER,
-      MIN_SAFE_INTEGER = $__40.MIN_SAFE_INTEGER,
-      EPSILON = $__40.EPSILON,
-      isFinite = $__40.isFinite,
-      isInteger = $__40.isInteger,
-      isNaN = $__40.isNaN,
-      isSafeInteger = $__40.isSafeInteger;
-  var getPrototypeOf = $traceurRuntime.assertObject(Object).getPrototypeOf;
-  function maybeDefine(object, name, descr) {
-    if (!(name in object)) {
-      Object.defineProperty(object, name, descr);
+  var $__36;
+  var __moduleName = "traceur-runtime@0.0.58/src/runtime/polyfills/ArrayIterator";
+  var $__34 = System.get("traceur-runtime@0.0.58/src/runtime/polyfills/utils"),
+      toObject = $__34.toObject,
+      toUint32 = $__34.toUint32,
+      createIteratorResultObject = $__34.createIteratorResultObject;
+  var ARRAY_ITERATOR_KIND_KEYS = 1;
+  var ARRAY_ITERATOR_KIND_VALUES = 2;
+  var ARRAY_ITERATOR_KIND_ENTRIES = 3;
+  var ArrayIterator = function ArrayIterator() {};
+  ($traceurRuntime.createClass)(ArrayIterator, ($__36 = {}, Object.defineProperty($__36, "next", {
+    value: function() {
+      var iterator = toObject(this);
+      var array = iterator.iteratorObject_;
+      if (!array) {
+        throw new TypeError('Object is not an ArrayIterator');
+      }
+      var index = iterator.arrayIteratorNextIndex_;
+      var itemKind = iterator.arrayIterationKind_;
+      var length = toUint32(array.length);
+      if (index >= length) {
+        iterator.arrayIteratorNextIndex_ = Infinity;
+        return createIteratorResultObject(undefined, true);
+      }
+      iterator.arrayIteratorNextIndex_ = index + 1;
+      if (itemKind == ARRAY_ITERATOR_KIND_VALUES)
+        return createIteratorResultObject(array[index], false);
+      if (itemKind == ARRAY_ITERATOR_KIND_ENTRIES)
+        return createIteratorResultObject([index, array[index]], false);
+      return createIteratorResultObject(index, false);
+    },
+    configurable: true,
+    enumerable: true,
+    writable: true
+  }), Object.defineProperty($__36, Symbol.iterator, {
+    value: function() {
+      return this;
+    },
+    configurable: true,
+    enumerable: true,
+    writable: true
+  }), $__36), {});
+  function createArrayIterator(array, kind) {
+    var object = toObject(array);
+    var iterator = new ArrayIterator;
+    iterator.iteratorObject_ = object;
+    iterator.arrayIteratorNextIndex_ = 0;
+    iterator.arrayIterationKind_ = kind;
+    return iterator;
+  }
+  function entries() {
+    return createArrayIterator(this, ARRAY_ITERATOR_KIND_ENTRIES);
+  }
+  function keys() {
+    return createArrayIterator(this, ARRAY_ITERATOR_KIND_KEYS);
+  }
+  function values() {
+    return createArrayIterator(this, ARRAY_ITERATOR_KIND_VALUES);
+  }
+  return {
+    get entries() {
+      return entries;
+    },
+    get keys() {
+      return keys;
+    },
+    get values() {
+      return values;
     }
-  }
-  function maybeDefineMethod(object, name, value) {
-    maybeDefine(object, name, {
-      value: value,
-      configurable: true,
-      enumerable: false,
-      writable: true
-    });
-  }
-  function maybeDefineConst(object, name, value) {
-    maybeDefine(object, name, {
-      value: value,
-      configurable: false,
-      enumerable: false,
-      writable: false
-    });
-  }
-  function maybeAddFunctions(object, functions) {
-    for (var i = 0; i < functions.length; i += 2) {
-      var name = functions[i];
-      var value = functions[i + 1];
-      maybeDefineMethod(object, name, value);
+  };
+});
+System.register("traceur-runtime@0.0.58/src/runtime/polyfills/Array", [], function() {
+  
+  var __moduleName = "traceur-runtime@0.0.58/src/runtime/polyfills/Array";
+  var $__37 = System.get("traceur-runtime@0.0.58/src/runtime/polyfills/ArrayIterator"),
+      entries = $__37.entries,
+      keys = $__37.keys,
+      values = $__37.values;
+  var $__38 = System.get("traceur-runtime@0.0.58/src/runtime/polyfills/utils"),
+      checkIterable = $__38.checkIterable,
+      isCallable = $__38.isCallable,
+      isConstructor = $__38.isConstructor,
+      maybeAddFunctions = $__38.maybeAddFunctions,
+      maybeAddIterator = $__38.maybeAddIterator,
+      registerPolyfill = $__38.registerPolyfill,
+      toInteger = $__38.toInteger,
+      toLength = $__38.toLength,
+      toObject = $__38.toObject;
+  function from(arrLike) {
+    var mapFn = arguments[1];
+    var thisArg = arguments[2];
+    var C = this;
+    var items = toObject(arrLike);
+    var mapping = mapFn !== undefined;
+    var k = 0;
+    var arr,
+        len;
+    if (mapping && !isCallable(mapFn)) {
+      throw TypeError();
     }
-  }
-  function maybeAddConsts(object, consts) {
-    for (var i = 0; i < consts.length; i += 2) {
-      var name = consts[i];
-      var value = consts[i + 1];
-      maybeDefineConst(object, name, value);
+    if (checkIterable(items)) {
+      arr = isConstructor(C) ? new C() : [];
+      for (var $__39 = items[Symbol.iterator](),
+          $__40; !($__40 = $__39.next()).done; ) {
+        var item = $__40.value;
+        {
+          if (mapping) {
+            arr[k] = mapFn.call(thisArg, item, k);
+          } else {
+            arr[k] = item;
+          }
+          k++;
+        }
+      }
+      arr.length = k;
+      return arr;
     }
-  }
-  function maybeAddIterator(object, func, Symbol) {
-    if (!Symbol || !Symbol.iterator || object[Symbol.iterator])
-      return;
-    if (object['@@iterator'])
-      func = object['@@iterator'];
-    Object.defineProperty(object, Symbol.iterator, {
-      value: func,
-      configurable: true,
-      enumerable: false,
-      writable: true
-    });
-  }
-  function polyfillPromise(global) {
-    if (!global.Promise)
-      global.Promise = Promise;
-  }
-  function polyfillCollections(global, Symbol) {
-    if (!global.Map)
-      global.Map = Map;
-    var mapPrototype = global.Map.prototype;
-    if (mapPrototype.entries) {
-      maybeAddIterator(mapPrototype, mapPrototype.entries, Symbol);
-      maybeAddIterator(getPrototypeOf(new global.Map().entries()), function() {
-        return this;
-      }, Symbol);
+    len = toLength(items.length);
+    arr = isConstructor(C) ? new C(len) : new Array(len);
+    for (; k < len; k++) {
+      if (mapping) {
+        arr[k] = typeof thisArg === 'undefined' ? mapFn(items[k], k) : mapFn.call(thisArg, items[k], k);
+      } else {
+        arr[k] = items[k];
+      }
     }
-    if (!global.Set)
-      global.Set = Set;
-    var setPrototype = global.Set.prototype;
-    if (setPrototype.values) {
-      maybeAddIterator(setPrototype, setPrototype.values, Symbol);
-      maybeAddIterator(getPrototypeOf(new global.Set().values()), function() {
-        return this;
-      }, Symbol);
+    arr.length = len;
+    return arr;
+  }
+  function of() {
+    for (var items = [],
+        $__41 = 0; $__41 < arguments.length; $__41++)
+      items[$__41] = arguments[$__41];
+    var C = this;
+    var len = items.length;
+    var arr = isConstructor(C) ? new C(len) : new Array(len);
+    for (var k = 0; k < len; k++) {
+      arr[k] = items[k];
     }
+    arr.length = len;
+    return arr;
   }
-  function polyfillString(String) {
-    maybeAddFunctions(String.prototype, ['codePointAt', codePointAt, 'contains', contains, 'endsWith', endsWith, 'startsWith', startsWith, 'repeat', repeat]);
-    maybeAddFunctions(String, ['fromCodePoint', fromCodePoint, 'raw', raw]);
+  function fill(value) {
+    var start = arguments[1] !== (void 0) ? arguments[1] : 0;
+    var end = arguments[2];
+    var object = toObject(this);
+    var len = toLength(object.length);
+    var fillStart = toInteger(start);
+    var fillEnd = end !== undefined ? toInteger(end) : len;
+    fillStart = fillStart < 0 ? Math.max(len + fillStart, 0) : Math.min(fillStart, len);
+    fillEnd = fillEnd < 0 ? Math.max(len + fillEnd, 0) : Math.min(fillEnd, len);
+    while (fillStart < fillEnd) {
+      object[fillStart] = value;
+      fillStart++;
+    }
+    return object;
   }
-  function polyfillArray(Array, Symbol) {
+  function find(predicate) {
+    var thisArg = arguments[1];
+    return findHelper(this, predicate, thisArg);
+  }
+  function findIndex(predicate) {
+    var thisArg = arguments[1];
+    return findHelper(this, predicate, thisArg, true);
+  }
+  function findHelper(self, predicate) {
+    var thisArg = arguments[2];
+    var returnIndex = arguments[3] !== (void 0) ? arguments[3] : false;
+    var object = toObject(self);
+    var len = toLength(object.length);
+    if (!isCallable(predicate)) {
+      throw TypeError();
+    }
+    for (var i = 0; i < len; i++) {
+      if (i in object) {
+        var value = object[i];
+        if (predicate.call(thisArg, value, i, object)) {
+          return returnIndex ? i : value;
+        }
+      }
+    }
+    return returnIndex ? -1 : undefined;
+  }
+  function polyfillArray(global) {
+    var $__42 = global,
+        Array = $__42.Array,
+        Object = $__42.Object,
+        Symbol = $__42.Symbol;
     maybeAddFunctions(Array.prototype, ['entries', entries, 'keys', keys, 'values', values, 'fill', fill, 'find', find, 'findIndex', findIndex]);
-    maybeAddFunctions(Array, ['from', from]);
+    maybeAddFunctions(Array, ['from', from, 'of', of]);
     maybeAddIterator(Array.prototype, values, Symbol);
-    maybeAddIterator(getPrototypeOf([].values()), function() {
+    maybeAddIterator(Object.getPrototypeOf([].values()), function() {
       return this;
     }, Symbol);
   }
-  function polyfillObject(Object) {
+  registerPolyfill(polyfillArray);
+  return {
+    get from() {
+      return from;
+    },
+    get of() {
+      return of;
+    },
+    get fill() {
+      return fill;
+    },
+    get find() {
+      return find;
+    },
+    get findIndex() {
+      return findIndex;
+    },
+    get polyfillArray() {
+      return polyfillArray;
+    }
+  };
+});
+System.get("traceur-runtime@0.0.58/src/runtime/polyfills/Array" + '');
+System.register("traceur-runtime@0.0.58/src/runtime/polyfills/Object", [], function() {
+  
+  var __moduleName = "traceur-runtime@0.0.58/src/runtime/polyfills/Object";
+  var $__43 = System.get("traceur-runtime@0.0.58/src/runtime/polyfills/utils"),
+      maybeAddFunctions = $__43.maybeAddFunctions,
+      registerPolyfill = $__43.registerPolyfill;
+  var $__44 = $traceurRuntime,
+      defineProperty = $__44.defineProperty,
+      getOwnPropertyDescriptor = $__44.getOwnPropertyDescriptor,
+      getOwnPropertyNames = $__44.getOwnPropertyNames,
+      keys = $__44.keys,
+      privateNames = $__44.privateNames;
+  function is(left, right) {
+    if (left === right)
+      return left !== 0 || 1 / left === 1 / right;
+    return left !== left && right !== right;
+  }
+  function assign(target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+      var props = keys(source);
+      var p,
+          length = props.length;
+      for (p = 0; p < length; p++) {
+        var name = props[p];
+        if (privateNames[name])
+          continue;
+        target[name] = source[name];
+      }
+    }
+    return target;
+  }
+  function mixin(target, source) {
+    var props = getOwnPropertyNames(source);
+    var p,
+        descriptor,
+        length = props.length;
+    for (p = 0; p < length; p++) {
+      var name = props[p];
+      if (privateNames[name])
+        continue;
+      descriptor = getOwnPropertyDescriptor(source, props[p]);
+      defineProperty(target, props[p], descriptor);
+    }
+    return target;
+  }
+  function polyfillObject(global) {
+    var Object = global.Object;
     maybeAddFunctions(Object, ['assign', assign, 'is', is, 'mixin', mixin]);
   }
-  function polyfillNumber(Number) {
+  registerPolyfill(polyfillObject);
+  return {
+    get is() {
+      return is;
+    },
+    get assign() {
+      return assign;
+    },
+    get mixin() {
+      return mixin;
+    },
+    get polyfillObject() {
+      return polyfillObject;
+    }
+  };
+});
+System.get("traceur-runtime@0.0.58/src/runtime/polyfills/Object" + '');
+System.register("traceur-runtime@0.0.58/src/runtime/polyfills/Number", [], function() {
+  
+  var __moduleName = "traceur-runtime@0.0.58/src/runtime/polyfills/Number";
+  var $__45 = System.get("traceur-runtime@0.0.58/src/runtime/polyfills/utils"),
+      isNumber = $__45.isNumber,
+      maybeAddConsts = $__45.maybeAddConsts,
+      maybeAddFunctions = $__45.maybeAddFunctions,
+      registerPolyfill = $__45.registerPolyfill,
+      toInteger = $__45.toInteger;
+  var $abs = Math.abs;
+  var $isFinite = isFinite;
+  var $isNaN = isNaN;
+  var MAX_SAFE_INTEGER = Math.pow(2, 53) - 1;
+  var MIN_SAFE_INTEGER = -Math.pow(2, 53) + 1;
+  var EPSILON = Math.pow(2, -52);
+  function NumberIsFinite(number) {
+    return isNumber(number) && $isFinite(number);
+  }
+  ;
+  function isInteger(number) {
+    return NumberIsFinite(number) && toInteger(number) === number;
+  }
+  function NumberIsNaN(number) {
+    return isNumber(number) && $isNaN(number);
+  }
+  ;
+  function isSafeInteger(number) {
+    if (NumberIsFinite(number)) {
+      var integral = toInteger(number);
+      if (integral === number)
+        return $abs(integral) <= MAX_SAFE_INTEGER;
+    }
+    return false;
+  }
+  function polyfillNumber(global) {
+    var Number = global.Number;
     maybeAddConsts(Number, ['MAX_SAFE_INTEGER', MAX_SAFE_INTEGER, 'MIN_SAFE_INTEGER', MIN_SAFE_INTEGER, 'EPSILON', EPSILON]);
-    maybeAddFunctions(Number, ['isFinite', isFinite, 'isInteger', isInteger, 'isNaN', isNaN, 'isSafeInteger', isSafeInteger]);
+    maybeAddFunctions(Number, ['isFinite', NumberIsFinite, 'isInteger', isInteger, 'isNaN', NumberIsNaN, 'isSafeInteger', isSafeInteger]);
   }
-  function polyfill(global) {
-    polyfillPromise(global);
-    polyfillCollections(global, global.Symbol);
-    polyfillString(global.String);
-    polyfillArray(global.Array, global.Symbol);
-    polyfillObject(global.Object);
-    polyfillNumber(global.Number);
-  }
-  polyfill(this);
+  registerPolyfill(polyfillNumber);
+  return {
+    get MAX_SAFE_INTEGER() {
+      return MAX_SAFE_INTEGER;
+    },
+    get MIN_SAFE_INTEGER() {
+      return MIN_SAFE_INTEGER;
+    },
+    get EPSILON() {
+      return EPSILON;
+    },
+    get isFinite() {
+      return NumberIsFinite;
+    },
+    get isInteger() {
+      return isInteger;
+    },
+    get isNaN() {
+      return NumberIsNaN;
+    },
+    get isSafeInteger() {
+      return isSafeInteger;
+    },
+    get polyfillNumber() {
+      return polyfillNumber;
+    }
+  };
+});
+System.get("traceur-runtime@0.0.58/src/runtime/polyfills/Number" + '');
+System.register("traceur-runtime@0.0.58/src/runtime/polyfills/polyfills", [], function() {
+  
+  var __moduleName = "traceur-runtime@0.0.58/src/runtime/polyfills/polyfills";
+  var polyfillAll = System.get("traceur-runtime@0.0.58/src/runtime/polyfills/utils").polyfillAll;
+  polyfillAll(this);
   var setupGlobals = $traceurRuntime.setupGlobals;
   $traceurRuntime.setupGlobals = function(global) {
     setupGlobals(global);
-    polyfill(global);
+    polyfillAll(global);
   };
   return {};
 });
-System.register("traceur-runtime@0.0.53/src/runtime/polyfill-import", [], function() {
-  
-  var __moduleName = "traceur-runtime@0.0.53/src/runtime/polyfill-import";
-  System.get("traceur-runtime@0.0.53/src/runtime/polyfills/polyfills");
-  return {};
-});
-System.get("traceur-runtime@0.0.53/src/runtime/polyfill-import" + '');
+System.get("traceur-runtime@0.0.58/src/runtime/polyfills/polyfills" + '');
 
 define("traceur-runtime", function(){});
 
@@ -28850,7 +29001,7 @@ define('diary/diary',[], function() {
           $__2; !($__2 = $__1.next()).done; ) {
         var target = $__2.value;
         {
-          var $__3 = $traceurRuntime.assertObject(target),
+          var $__3 = target,
               config = $__3.config,
               reporter = $__3.reporter;
           if ((config.level.indexOf('*') !== -1 || config.level.indexOf(level) !== -1) && (config.group.indexOf('*') !== -1 || config.group.indexOf(group) !== -1)) {
@@ -28912,7 +29063,7 @@ define('diary/reporters/console',[], function() {
   };
   ($traceurRuntime.createClass)(ConsoleReporter, {
     receive: function(log) {
-      var $__1 = $traceurRuntime.assertObject(log),
+      var $__1 = log,
           level = $__1.level,
           group = $__1.group,
           message = $__1.message;
@@ -29048,7 +29199,7 @@ define('common/utils/util',[], function() {
 define('common/services/AuthenticationService',['../../common/utils/util'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   
   var serialize = $__0.serialize;
   var AUTH_CONFIG = {
@@ -29156,9 +29307,9 @@ define('common/services/AuthenticationService',['../../common/utils/util'], func
 define('common/services/UserService',['./AuthenticationService', 'diary/diary'], function($__0,$__2) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   var AUTH_CONFIG = $__0.AUTH_CONFIG;
   var Diary = $__2.Diary;
   var USER_KEY = '_currentUser';
@@ -29222,13 +29373,13 @@ define('common/services/UserService',['./AuthenticationService', 'diary/diary'],
 define('common/controllers/LoginController',['diary/diary', '../services/AuthenticationService', '../services/UserService', '../services/AuthenticationService'], function($__0,$__2,$__4,$__6) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   if (!$__4 || !$__4.__esModule)
-    $__4 = {'default': $__4};
+    $__4 = {default: $__4};
   if (!$__6 || !$__6.__esModule)
-    $__6 = {'default': $__6};
+    $__6 = {default: $__6};
   var Diary = $__0.Diary;
   var AuthenticationServiceClass = $__2.AuthenticationService;
   var UserServiceClass = $__4.default;
@@ -29534,7 +29685,7 @@ define('common/services/AuthorizationService',[], function() {
 define('common/elements/hasPermission',['../services/AuthenticationService'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   
   var AUTH_EVENTS = $__0.AUTH_EVENTS;
   function hasPermission(AuthorizationService) {
@@ -29573,7 +29724,7 @@ define('common/elements/hasPermission',['../services/AuthenticationService'], fu
 define('common/utils/AuthInterceptor',['../services/AuthenticationService'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   var AUTH_EVENTS = $__0.AUTH_EVENTS;
   function AuthInterceptor($rootScope, $q, httpBuffer) {
     
@@ -32491,7 +32642,7 @@ define("stomp", function(){});
 define('common/utils/Enum',[], function() {
   
   var EnumSymbol = function EnumSymbol(name, $__6, value) {
-    var value = $traceurRuntime.assertObject($__6).value;
+    var value = $__6.value;
     this.name = name;
     this.value = (value !== undefined) ? value : Symbol(name);
     delete arguments[1].value;
@@ -34600,9 +34751,9 @@ define("reflect", ["es6-shim"], (function (global) {
 define('resiliency/Retry',['../common/utils/Enum', 'reflect'], function($__0,$__2) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   var $__1 = $__0,
       EnumSymbol = $__1.EnumSymbol,
       Enum = $__1.Enum;
@@ -34623,7 +34774,7 @@ define('resiliency/Retry',['../common/utils/Enum', 'reflect'], function($__0,$__
         $__12,
         $__13,
         $__14;
-    var $__9 = $traceurRuntime.assertObject($__8),
+    var $__9 = $__8,
         maxTries = ($__10 = $__9.maxTries) === void 0 ? 1 : $__10,
         maxDelay = ($__11 = $__9.maxDelay) === void 0 ? Infinity : $__11,
         delayRatio = ($__12 = $__9.delayRatio) === void 0 ? 1 : $__12,
@@ -34891,13 +35042,13 @@ define('resiliency/Retry',['../common/utils/Enum', 'reflect'], function($__0,$__
 define('common/services/EventBus',['sockjs', 'stomp', '../utils/Enum', '../../resiliency/Retry'], function($__0,$__1,$__2,$__4) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__1 || !$__1.__esModule)
-    $__1 = {'default': $__1};
+    $__1 = {default: $__1};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   if (!$__4 || !$__4.__esModule)
-    $__4 = {'default': $__4};
+    $__4 = {default: $__4};
   $__0;
   $__1;
   var $__3 = $__2,
@@ -35097,25 +35248,25 @@ define('common/services/EventBus',['sockjs', 'stomp', '../utils/Enum', '../../re
 define('common/index',['./routes', './controllers/LoginController', './controllers/SettingsController', './services/AuthenticationService', './services/AuthorizationService', './services/UserService', './elements/hasPermission', './utils/AuthInterceptor', './services/EventBus', '../resiliency/Retry'], function($__0,$__2,$__4,$__6,$__8,$__10,$__12,$__14,$__16,$__18) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   if (!$__4 || !$__4.__esModule)
-    $__4 = {'default': $__4};
+    $__4 = {default: $__4};
   if (!$__6 || !$__6.__esModule)
-    $__6 = {'default': $__6};
+    $__6 = {default: $__6};
   if (!$__8 || !$__8.__esModule)
-    $__8 = {'default': $__8};
+    $__8 = {default: $__8};
   if (!$__10 || !$__10.__esModule)
-    $__10 = {'default': $__10};
+    $__10 = {default: $__10};
   if (!$__12 || !$__12.__esModule)
-    $__12 = {'default': $__12};
+    $__12 = {default: $__12};
   if (!$__14 || !$__14.__esModule)
-    $__14 = {'default': $__14};
+    $__14 = {default: $__14};
   if (!$__16 || !$__16.__esModule)
-    $__16 = {'default': $__16};
+    $__16 = {default: $__16};
   if (!$__18 || !$__18.__esModule)
-    $__18 = {'default': $__18};
+    $__18 = {default: $__18};
   var routes = $__0.default;
   var $__3 = $__2,
       LoginController = $__3.LoginController,
@@ -35234,9 +35385,9 @@ define('home/controllers/HomeController',[], function() {
 define('home/index',['./routes', './controllers/HomeController'], function($__0,$__2) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   var routes = $__0.default;
   var HomeController = $__2.default;
   var moduleName = 'spaApp.home';
@@ -35434,7 +35585,7 @@ define('drug/services/DrugService',[], function() {
 define('drug/controllers/DrugSearchController',['../services/DrugService'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   var $__1 = $__0,
       DRUG_LIST_PARAMS = $__1.DRUG_LIST_PARAMS,
       DRUG_SEARCH_PARAMS = $__1.DRUG_SEARCH_PARAMS;
@@ -35522,15 +35673,15 @@ define('drug/controllers/DrugDetailController',[], function() {
 define('drug/index',['./routes', './controllers/DrugSearchController', './controllers/DrugResultsController', './controllers/DrugDetailController', './services/DrugService'], function($__0,$__2,$__4,$__6,$__8) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   if (!$__4 || !$__4.__esModule)
-    $__4 = {'default': $__4};
+    $__4 = {default: $__4};
   if (!$__6 || !$__6.__esModule)
-    $__6 = {'default': $__6};
+    $__6 = {default: $__6};
   if (!$__8 || !$__8.__esModule)
-    $__8 = {'default': $__8};
+    $__8 = {default: $__8};
   var routes = $__0.default;
   var DrugSearchController = $__2.default;
   var DrugResultsController = $__4.default;
@@ -35609,7 +35760,7 @@ define('async',[],function(){
 define('provider/utils/gMaps',['async!//maps.googleapis.com/maps/api/js?key=AIzaSyCOPhbBgg7Rb8SS_f4iC-w9zIB-vD44ZkQ&sensor=false'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   $__0;
   var $__default = window.google.maps;
   return {
@@ -35623,7 +35774,7 @@ define('provider/utils/gMaps',['async!//maps.googleapis.com/maps/api/js?key=AIza
 define('provider/models/GeoLocation',['../utils/gMaps'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   var gMaps = $__0.default;
   var LatLng = gMaps.LatLng;
   var _latLng = Symbol('_latLng', true);
@@ -35653,7 +35804,7 @@ define('provider/models/GeoLocation',['../utils/gMaps'], function($__0) {
 define('provider/services/ProviderService',['../models/GeoLocation'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   var GeoLocation = $__0.default;
   var PROVIDER_SEARCH_CONFIG = {BASE_API_URL: 'http://localhost:8080/<YourBaaS>/ProviderSearchAPI'};
   function ProviderRestangular(Restangular) {
@@ -35766,7 +35917,7 @@ define('provider/services/ProviderService',['../models/GeoLocation'], function($
 define('provider/routes',['./services/ProviderService'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   var $__1 = $__0,
       PROVIDER_SEARCH_GEOLOCATION = $__1.PROVIDER_SEARCH_GEOLOCATION,
       PROVIDER_SEARCH_PARAMS = $__1.PROVIDER_SEARCH_PARAMS;
@@ -35829,7 +35980,7 @@ define('provider/routes',['./services/ProviderService'], function($__0) {
 define('provider/controllers/ProviderSearchController',['../services/ProviderService'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   var $__1 = $__0,
       PROVIDER_SEARCH_PARAMS = $__1.PROVIDER_SEARCH_PARAMS,
       PROVIDER_SEARCH_GEOLOCATION = $__1.PROVIDER_SEARCH_GEOLOCATION;
@@ -35926,9 +36077,9 @@ define('provider/controllers/ProviderResultsController',[], function() {
 define('provider/controllers/ProviderMapController',['../utils/gMaps', '../services/ProviderService'], function($__0,$__2) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   var gMaps = $__0.default;
   var PROVIDER_SEARCH_GEOLOCATION = $__2.PROVIDER_SEARCH_GEOLOCATION;
   var scope = Symbol('scope', true);
@@ -35972,9 +36123,9 @@ define('provider/controllers/ProviderMapController',['../utils/gMaps', '../servi
             } catch ($__8) {
               {
                 {
-                  $__8 = $traceurRuntime.assertObject($__7.value);
-                  latX = $traceurRuntime.assertObject($__8.location).lat;
-                  lngX = $traceurRuntime.assertObject($__8.location).lng;
+                  $__8 = $__7.value;
+                  latX = $__8.location.lat;
+                  lngX = $__8.location.lng;
                 }
                 {
                   bounds.extend(new gMaps.LatLng(latX, lngX));
@@ -36047,7 +36198,7 @@ define('provider/controllers/ProviderDetailController',[], function() {
 define('provider/services/GeolocationService',['../models/GeoLocation'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   var GeoLocation = $__0.default;
   var q = Symbol('q', true);
   var http = Symbol('http', true);
@@ -36140,7 +36291,7 @@ define('provider/services/GeolocationService',['../models/GeoLocation'], functio
 define('provider/services/GeocoderService',['../utils/gMaps'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   var gMaps = $__0.default;
   var GeocoderService = function GeocoderService() {
     console.info('in GeocoderService constructor....');
@@ -36191,23 +36342,23 @@ define('provider/utils/StartFromFilter',[], function() {
 define('provider/index',['./routes', './controllers/ProviderSearchController', './controllers/ProviderResultsController', './controllers/ProviderMapController', './controllers/ProviderDetailController', './services/GeolocationService', './services/GeocoderService', './services/ProviderService', './utils/StartFromFilter'], function($__0,$__2,$__4,$__6,$__8,$__10,$__12,$__14,$__16) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   if (!$__4 || !$__4.__esModule)
-    $__4 = {'default': $__4};
+    $__4 = {default: $__4};
   if (!$__6 || !$__6.__esModule)
-    $__6 = {'default': $__6};
+    $__6 = {default: $__6};
   if (!$__8 || !$__8.__esModule)
-    $__8 = {'default': $__8};
+    $__8 = {default: $__8};
   if (!$__10 || !$__10.__esModule)
-    $__10 = {'default': $__10};
+    $__10 = {default: $__10};
   if (!$__12 || !$__12.__esModule)
-    $__12 = {'default': $__12};
+    $__12 = {default: $__12};
   if (!$__14 || !$__14.__esModule)
-    $__14 = {'default': $__14};
+    $__14 = {default: $__14};
   if (!$__16 || !$__16.__esModule)
-    $__16 = {'default': $__16};
+    $__16 = {default: $__16};
   var routes = $__0.default;
   var ProviderSearchController = $__2.default;
   var ProviderResultsController = $__4.default;
@@ -36318,7 +36469,7 @@ define('experiments/routes',[], function() {
 define('experiments/services/EmailService',['diary/diary'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   var Diary = $__0.Diary;
   var EmailService = function EmailService() {
     this.logger = Diary.logger('EmailService');
@@ -36431,7 +36582,7 @@ define('di/util',[], function() {
 define('di/annotations',['./util'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   var isFunction = $__0.isFunction;
   var SuperConstructor = function SuperConstructor() {};
   ($traceurRuntime.createClass)(SuperConstructor, {}, {});
@@ -36586,7 +36737,7 @@ define('di/annotations',['./util'], function($__0) {
 define('di/profiler',['./util'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   var toString = $__0.toString;
   var IS_DEBUG = false;
   var _global = null;
@@ -36663,9 +36814,9 @@ define('di/profiler',['./util'], function($__0) {
 define('di/providers',['./annotations', './util'], function($__0,$__2) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   var $__1 = $__0,
       SuperConstructorAnnotation = $__1.SuperConstructor,
       readAnnotations = $__1.readAnnotations;
@@ -36763,13 +36914,13 @@ define('di/providers',['./annotations', './util'], function($__0,$__2) {
 define('di/injector',['./annotations', './util', './profiler', './providers'], function($__0,$__2,$__4,$__6) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   if (!$__4 || !$__4.__esModule)
-    $__4 = {'default': $__4};
+    $__4 = {default: $__4};
   if (!$__6 || !$__6.__esModule)
-    $__6 = {'default': $__6};
+    $__6 = {default: $__6};
   var $__1 = $__0,
       annotate = $__1.annotate,
       readAnnotations = $__1.readAnnotations,
@@ -37005,9 +37156,9 @@ define('di/injector',['./annotations', './util', './profiler', './providers'], f
 define('di/index',['./injector', './annotations'], function($__0,$__1) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__1 || !$__1.__esModule)
-    $__1 = {'default': $__1};
+    $__1 = {default: $__1};
   var $__injector__ = $__0;
   var $__annotations__ = $__1;
   return {
@@ -37069,7 +37220,7 @@ define('experiments/models/TodoItem',[], function() {
 define('common/utils/Generators',['di/index'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   
   var $__1 = $__0,
       Provide = $__1.Provide,
@@ -37289,13 +37440,13 @@ define('common/utils/Generators',['di/index'], function($__0) {
 define('experiments/models/TodoList',['./TodoItem', '../../common/utils/Generators', 'di/index', 'diary/diary'], function($__0,$__2,$__4,$__6) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   if (!$__4 || !$__4.__esModule)
-    $__4 = {'default': $__4};
+    $__4 = {default: $__4};
   if (!$__6 || !$__6.__esModule)
-    $__6 = {'default': $__6};
+    $__6 = {default: $__6};
   var Todo = $__0.default;
   var Generators = $__2.Generators;
   var Inject = $__4.Inject;
@@ -37399,7 +37550,7 @@ define('experiments/models/TodoList',['./TodoItem', '../../common/utils/Generato
 define('common/utils/generators',['di/index'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   
   var $__1 = $__0,
       Provide = $__1.Provide,
@@ -37619,11 +37770,11 @@ define('common/utils/generators',['di/index'], function($__0) {
 define('experiments/controllers/TodoController',['di/index', '../models/TodoList', '../../common/utils/generators'], function($__0,$__2,$__4) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   if (!$__4 || !$__4.__esModule)
-    $__4 = {'default': $__4};
+    $__4 = {default: $__4};
   var Injector = $__0.Injector;
   var TodoList = $__2.default;
   var Generators = $__4.Generators;
@@ -43572,15 +43723,15 @@ define("term", function(){});
 define('experiments/controllers/TerminalController',['sockjs', 'stomp', 'term'], function($__0,$__1,$__2) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__1 || !$__1.__esModule)
-    $__1 = {'default': $__1};
+    $__1 = {default: $__1};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   $__0;
   $__1;
   $__2;
-  var TerminalController = function TerminalController($scope, $eventBus) {
+  var TerminalController = function TerminalController($scope, $stateParams, $eventBus) {
     var $__3 = this;
     this.term = new Terminal({
       cols: 150,
@@ -43596,7 +43747,7 @@ define('experiments/controllers/TerminalController',['sockjs', 'stomp', 'term'],
     this.term.open(divTerminal);
     this.term.write('\x1b[31mWelcome to term.js!\x1b[m\r\n');
     this.term.on('data', (function(data) {
-      $eventBus.publish('/app/terminal/input', data);
+      $eventBus.publish(("/app/terminal/input/" + $stateParams.containerId), data);
     }));
     var onLogMessage = (function(log) {
       $__3.term.write(JSON.parse(log.body) + '\r\n');
@@ -43609,7 +43760,7 @@ define('experiments/controllers/TerminalController',['sockjs', 'stomp', 'term'],
     });
     $eventBus.registerHandler('/topic/terminal/log', onLogMessage);
     $eventBus.registerHandler('/topic/terminal/error', onLogError);
-    $eventBus.registerHandler('/user/queue/terminal/input', onKeyStroke);
+    $eventBus.registerHandler(("/user/queue/terminal/input/" + $stateParams.containerId), onKeyStroke);
     $scope.$on('$destroy', (function() {
       $eventBus.unregisterHandler('/topic/terminal/log');
       $eventBus.unregisterHandler('/topic/terminal/error');
@@ -43761,9 +43912,9 @@ define('experiments/services/PrimeGenerator',[], function() {
 define('experiments/controllers/ExperimentController',['diary/diary', '../services/PrimeGenerator'], function($__0,$__2) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   var Diary = $__0.Diary;
   var $__3 = $__2,
       take = $__3.take,
@@ -43886,7 +44037,7 @@ define('experiments/controllers/ElementsController',[], function() {
 define('experiments/controllers/GrowlTranslateDemoController',['diary/diary'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   var Diary = $__0.Diary;
   var GrowlTranslateDemoController = function GrowlTranslateDemoController($scope, growl, $translate, AuthorizationService) {
     var $__2 = this;
@@ -43928,9 +44079,9 @@ define('experiments/controllers/GrowlTranslateDemoController',['diary/diary'], f
 define('experiments/elements/myElement/MyElement',['../../../common/utils/util', 'diary/diary'], function($__0,$__2) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   var $__1 = $__0,
       loadDOMFromString = $__1.loadDOMFromString,
       loadDOMFromLink = $__1.loadDOMFromLink;
@@ -44024,7 +44175,7 @@ define('experiments/elements/customButton/CustomButton',[], function() {
 define('experiments/elements/myNews/MyNews',['../../../common/utils/util'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   var $__1 = $__0,
       loadDOMFromString = $__1.loadDOMFromString,
       loadDOMFromLink = $__1.loadDOMFromLink;
@@ -44095,29 +44246,29 @@ define('experiments/elements/highlighter',[], function() {
 define('experiments/index',['./routes', './services/EmailService', './controllers/TodoController', './controllers/MessagingController', './controllers/TerminalController', './controllers/ExperimentController', './controllers/ElementsController', './controllers/GrowlTranslateDemoController', './elements/myElement/MyElement', './elements/customButton/CustomButton', './elements/myNews/MyNews', './elements/highlighter'], function($__0,$__2,$__4,$__6,$__8,$__10,$__12,$__14,$__16,$__18,$__20,$__22) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   if (!$__4 || !$__4.__esModule)
-    $__4 = {'default': $__4};
+    $__4 = {default: $__4};
   if (!$__6 || !$__6.__esModule)
-    $__6 = {'default': $__6};
+    $__6 = {default: $__6};
   if (!$__8 || !$__8.__esModule)
-    $__8 = {'default': $__8};
+    $__8 = {default: $__8};
   if (!$__10 || !$__10.__esModule)
-    $__10 = {'default': $__10};
+    $__10 = {default: $__10};
   if (!$__12 || !$__12.__esModule)
-    $__12 = {'default': $__12};
+    $__12 = {default: $__12};
   if (!$__14 || !$__14.__esModule)
-    $__14 = {'default': $__14};
+    $__14 = {default: $__14};
   if (!$__16 || !$__16.__esModule)
-    $__16 = {'default': $__16};
+    $__16 = {default: $__16};
   if (!$__18 || !$__18.__esModule)
-    $__18 = {'default': $__18};
+    $__18 = {default: $__18};
   if (!$__20 || !$__20.__esModule)
-    $__20 = {'default': $__20};
+    $__20 = {default: $__20};
   if (!$__22 || !$__22.__esModule)
-    $__22 = {'default': $__22};
+    $__22 = {default: $__22};
   var routes = $__0.default;
   var EmailService = $__2.default;
   var TodoController = $__4.default;
@@ -46827,47 +46978,47 @@ define('text!../../test/fixtures/dataadmin_profile.json',[],function () { return
 define('test.env',['angular-mocks', 'text!../../test/fixtures/drugs_1.json', 'text!../../test/fixtures/drugs_2.json', 'text!../../test/fixtures/drug_1.json', 'text!../../test/fixtures/drug_2.json', 'text!../../test/fixtures/drug_3.json', 'text!../../test/fixtures/providers_11.json', 'text!../../test/fixtures/providers_12.json', 'text!../../test/fixtures/providers_2.json', 'text!../../test/fixtures/specialties_A.json', 'text!../../test/fixtures/specialties_B.json', 'text!../../test/fixtures/specialties_C.json', 'text!../../test/fixtures/specialties_D.json', 'text!../../test/fixtures/specialties_E.json', 'text!../../test/fixtures/specialties_F.json', 'text!../../test/fixtures/specialties_S.json', 'text!../../test/fixtures/sumo_profile.json', 'text!../../test/fixtures/businessadmin_profile.json', 'text!../../test/fixtures/itadmin_profile.json', 'text!../../test/fixtures/dataadmin_profile.json', './common/services/EventBus'], function($__0,$__1,$__2,$__3,$__4,$__5,$__6,$__7,$__8,$__9,$__10,$__11,$__12,$__13,$__14,$__15,$__16,$__17,$__18,$__19,$__20) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__1 || !$__1.__esModule)
-    $__1 = {'default': $__1};
+    $__1 = {default: $__1};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   if (!$__3 || !$__3.__esModule)
-    $__3 = {'default': $__3};
+    $__3 = {default: $__3};
   if (!$__4 || !$__4.__esModule)
-    $__4 = {'default': $__4};
+    $__4 = {default: $__4};
   if (!$__5 || !$__5.__esModule)
-    $__5 = {'default': $__5};
+    $__5 = {default: $__5};
   if (!$__6 || !$__6.__esModule)
-    $__6 = {'default': $__6};
+    $__6 = {default: $__6};
   if (!$__7 || !$__7.__esModule)
-    $__7 = {'default': $__7};
+    $__7 = {default: $__7};
   if (!$__8 || !$__8.__esModule)
-    $__8 = {'default': $__8};
+    $__8 = {default: $__8};
   if (!$__9 || !$__9.__esModule)
-    $__9 = {'default': $__9};
+    $__9 = {default: $__9};
   if (!$__10 || !$__10.__esModule)
-    $__10 = {'default': $__10};
+    $__10 = {default: $__10};
   if (!$__11 || !$__11.__esModule)
-    $__11 = {'default': $__11};
+    $__11 = {default: $__11};
   if (!$__12 || !$__12.__esModule)
-    $__12 = {'default': $__12};
+    $__12 = {default: $__12};
   if (!$__13 || !$__13.__esModule)
-    $__13 = {'default': $__13};
+    $__13 = {default: $__13};
   if (!$__14 || !$__14.__esModule)
-    $__14 = {'default': $__14};
+    $__14 = {default: $__14};
   if (!$__15 || !$__15.__esModule)
-    $__15 = {'default': $__15};
+    $__15 = {default: $__15};
   if (!$__16 || !$__16.__esModule)
-    $__16 = {'default': $__16};
+    $__16 = {default: $__16};
   if (!$__17 || !$__17.__esModule)
-    $__17 = {'default': $__17};
+    $__17 = {default: $__17};
   if (!$__18 || !$__18.__esModule)
-    $__18 = {'default': $__18};
+    $__18 = {default: $__18};
   if (!$__19 || !$__19.__esModule)
-    $__19 = {'default': $__19};
+    $__19 = {default: $__19};
   if (!$__20 || !$__20.__esModule)
-    $__20 = {'default': $__20};
+    $__20 = {default: $__20};
   $__0;
   $__1;
   $__2;
@@ -47027,7 +47178,7 @@ $templateCache.put("views/experiments/elements.html","<div  class=\"container\">
 $templateCache.put("views/experiments/experiment.html","<div  class=\"container\">\n    <div class=\"row\">\n        <div class=\"col-md-8\">\n            <div class=\"row\">\n                <div class=\"col-md-6\">\n                    <div class=\"panel panel-default\">\n                        <div class=\"panel-heading\">\n                            <h3 class=\"panel-title\">Panel title</h3>\n                        </div>\n                        <div class=\"panel-body\">\n                            <div>Future panel</div>\n                        </div>\n                    </div>\n                </div><!-- /.col-md-4 -->\n                <div class=\"col-md-6\">\n                    <div class=\"panel panel-default\">\n                        <div class=\"panel-heading\">\n                            <h3 class=\"panel-title\">Panel title</h3>\n                        </div>\n                        <div class=\"panel-body\">\n                            Name: <a href=\"#\" editable-text=\"user.name\">{{ user.name || \"empty\" }}</a><br/>\n                            DOB:\n                            <a href=\"#\" editable-bsdate=\"user.dob\" e-datepicker-popup=\"dd-MMMM-yyyy\">\n                                {{ (user.dob | date:\"dd/MM/yyyy\") || \'empty\' }}\n                            </a>\n                        </div>\n                    </div>\n                </div><!-- /.col-md-4 -->\n            </div>\n            <div>\n                <div class=\"panel panel-default\">\n                    <div class=\"panel-heading\">\n                        <h3 class=\"panel-title\">Command Panel</h3>\n                    </div>\n                    <div class=\"panel-body\">\n                        <div class=\"well \">\n                            <form class=\"form-inline\" role=\"form\">\n                                    <label for=\"input\">Prime Number Generator</label>\n                                    <input type=\"number\" class=\"form-control\" id=\"input\" ng-model=\"input\" ng-change=\"genPrime(input)\" min=\"1\" max=\"99\" autofocus>\n                                    <button type=\"button\" class=\"btn btn-info pull-right\"  ng-click=\"output = \'\';\">Clean Output</button>\n                            </form>\n                        </div>\n                        <div class=\"well well-lg\">\n                            <button type=\"button\" class=\"btn btn-danger\"  ng-click=\"sendEmail(\'sumo@demo.com\')\">Send Email</button>\n                            <button type=\"button\" class=\"btn btn-info\"  ng-click=\"currentUser()\">Get Current User</button>\n                            <button type=\"button\" class=\"btn btn-info\"  ng-click=\"clearUser()\">Clear User Cache</button>\n                            <button type=\"button\" class=\"btn btn-info\"  ng-click=\"test403()\">Test 403 URL</button>\n                        </div>\n                    </div>\n                </div>\n            </div>\n            <div>\n                <div class=\"panel panel-default\">\n                    <div class=\"panel-heading\">\n                        <h3 class=\"panel-title\">Result Panel</h3>\n                    </div>\n                    <div class=\"panel-body\">\n                        <div class=\"well well-lg\">\n                            <div>{{ output }}</div>\n                        </div>\n                    </div>\n                </div>\n            </div>\n        </div>\n        <div class=\"col-md-4\">\n            <div class=\"panel panel-success\" ng-init=\"names=[\'Igor Minar\', \'Brad Green\', \'Dave Geddes\', \'Naomi Black\', \'Greg Weber\', \'Dean Sofer\', \'Wes Alvaro\', \'John Scott\', \'Daniel Nadasi\'];\">\n                <div class=\"panel-heading\">\n                    <span class=\"panel-title\">Search </span>\n                </div>\n                <div class=\"panel-body\">\n                    <input type=\"text\" class=\"form-control\" ng-model=\"search\">\n                    <ul class=\"nav nav-pills nav-stacked\">\n                        <li ng-repeat=\"name in names | filter:search\" class=\"repeat-animation\">\n                            <a href=\"#\"> {{name}} </a>\n                        </li>\n                    </ul>\n                </div>\n            </div>\n        </div><!-- /.col-md-4 -->\n    </div>\n</div>");
 $templateCache.put("views/experiments/growlTranslate.html","<div  class=\"container\">\n    <section class=\"row\">\n        <div class=\"col-md-4\">\n            <div class=\"panel panel-primary\">\n                <div class=\"panel-heading\">\n                    <h3 class=\"panel-title\">{{ \'HEADLINE\' | translate }}</h3>\n                </div>\n                <div class=\"panel-body\">\n                    <div class=\"pull-right\">\n                        <a ng-click=\"setLang(\'de_DE\')\" translate=\"BUTTON_LANG_DE\"></a>\n                        <a ng-click=\"setLang(\'en_EN\')\" translate=\"BUTTON_LANG_EN\"></a>\n                    </div>\n                    <p>{{ \'PARAGRAPH\' | translate }}</p>\n                </div>\n            </div>\n        </div><!-- /.col-md-4 -->\n        <div class=\"col-md-4\">\n            <div class=\"panel panel-warning\">\n                <div class=\"panel-heading\">\n                    <h3 class=\"panel-title\">Panel title I</h3>\n                </div>\n                <div class=\"panel-body\">\n                    <p>{{ \'PASSED_AS_ATTRIBUTE\' | translate }}</p>\n                </div>\n            </div>\n        </div><!-- /.col-md-4 -->\n        <div class=\"col-md-4\">\n            <div class=\"panel panel-success\">\n                <div class=\"panel-heading\">\n                    <h3 class=\"panel-title\">Panel title II</h3>\n                </div>\n                <div class=\"panel-body\">\n                    <p>{{ \'PASSED_AS_INTERPOLATION\' | translate }}</p>\n                </div>\n            </div>\n        </div><!-- /.col-md-4 -->\n    </section>\n\n    <section class=\"row\">\n        <div class=\"col-md-12\">\n            <div class=\"well well-lg\">\n                <button type=\"button\" class=\"btn btn-danger\"  ng-click=\"addErrorMessage()\">Add Error Alert</button>\n                <button type=\"button\" class=\"btn btn-warning\" ng-click=\"addWarnMessage()\">Add Warning Alert</button>\n                <button type=\"button\" class=\"btn btn-info\"    ng-click=\"addInfoMessage()\">Add Info Alert</button>\n                <button type=\"button\" class=\"btn btn-success\" ng-click=\"addSuccessMessage()\">Add Success Alert</button>\n                <button type=\"button\" class=\"btn btn-warning\" ng-click=\"addTranslatedMessage()\">Add Translated Alert</button>\n            </div>\n        </div>\n    </section>\n</div>\n");
 $templateCache.put("views/experiments/led.html","<div  class=\"container\">\n    <style>\n        .led {\n            display: inline-block;\n            vertical-align: middle;\n            position: relative;\n            margin-top: -5px;\n            width: 12px;\n            height: 12px\n        }\n\n        .led .led-off, .led .led-on {\n            position: absolute;\n            top: 50%;\n            left: 50%;\n            margin-top: -6px;\n            margin-left: -6px;\n            width: 100%;\n            height: 100%;\n            border-radius: 6px;\n            background-color: none;\n            border-style: solid;\n            border-color: #637089;\n            border-width: 2px;\n            opacity: 1\n        }\n\n        .led.offline .led-off, .led.offline .led-on {\n            border-style: dotted\n        }\n    </style>\n    <div class=\"well well-lg\" style=\"background:#21252d\">\n        <led ng-class=\"{offline: scout1.isOffline}\" off-color=\"scout1.torch\" color=\"scout1.led\" size=\"24\"></led>\n        <br> <br><led ng-class=\"{offline: scout2.isOffline}\" off-color=\"scout2.torch\" color=\"scout2.led\" size=\"12\"></led>\n        <button type=\"button\" class=\"btn btn-danger\"  ng-click=\"setLed([255, 0, 0])\">setLed</button>\n        <button type=\"button\" class=\"btn\"  ng-click=\"toggle()\">toggle</button>\n    </div>\n</div>");
-$templateCache.put("views/experiments/messaging.html","<div  class=\"container\">\n\n    <style scoped type=\"text/css\">\n        @import \"styles/messaging.css\";\n    </style>\n\n    <div class=\"panel panel-dark\">\n        <div class=\"panel-heading\">\n            <h3 class=\"panel-title\">Notifications\n                <div class=\"led pull-right\" ng-class=\"{0: \'led-yellow led-yellow-blink\', 1: \'led-green\', 2: \'led-blue\', 3: \'led-orange\', 4: \'led-red\'}[mc.readyState]\"></div>\n                <span class=\"pull-right\" >\n                    <span class=\"label change\" highlighter=\"mc.AAPL\" up-class=\"label-success\" down-class=\"label-danger\">AAPL: {{mc.AAPL}}</span>\n                    <span class=\"label change\" highlighter=\"mc.GOOG\" up-class=\"label-success\" down-class=\"label-danger\">GOOG: {{mc.GOOG}}</span>\n                    <span class=\"label change\" highlighter=\"mc.YHOO\" up-class=\"label-success\" down-class=\"label-danger\">YHOO: {{mc.YHOO}} </span>\n                    &nbsp;&nbsp;&nbsp;&nbsp;\n                </span>\n            </h3>\n        </div>\n        <div class=\"panel-body\">\n            <div class=\"well well-lg\">\n                <p ng-repeat=\'notification in mc.notifications track by $index\'  ng-class=\"{true: \'text-danger\', false: \'text-success\'}[notification.error === true]\">{{ notification.message }}</p>\n            </div>\n        </div>\n    </div>\n\n    <div class=\"row\">\n        <div class=\"col-md-offset-2 col-md-10\">\n            <ul class=\"nav nav-pills\">\n                <li ng-repeat=\'room in mc.rooms\' ng-click=\"mc.selectedRoom=room\" ng-class=\"{ active: (room == mc.selectedRoom) }\"><a>{{room}}</a></li>\n                <li class=\"pull-right\"><a class=\"btn\" ng-class=\"{true: \'btn-danger\', false: \'btn-success\'}[mc.joined]\" has-permission=\"ROLE_USER\" ng-click=\"mc.joinLeave()\">{{mc.joined ? \'Leave\': \'Join\'}}</a></li>\n            </ul>\n        </div>\n    </div>\n\n    <div class=\'row\'>\n        <div class=\'col-md-2\'>\n            <small class=\'marker\'>Visible Users</small>\n            <ul class=\"nav nav-pills nav-stacked\">\n                <li ng-repeat=\'user in mc.users\' ng-click=\"mc.selectedUser=user\" ng-class=\"{ active: (user == mc.selectedUser) }\"><a>{{user}}</a></li>\n            </ul>\n        </div>\n        <div class=\'col-md-10\'>\n            <small class=\'marker\'>Chat</small>\n            <form name=\"chatForm\" role=\"form\" ng-submit=\"mc.sendMessage(mc.newMessage)\" novalidate>\n                <div class=\'input-group\'>\n                    <input class=\'input-sm form-control\' ng-model=\'mc.newMessage\' type=\'text\' required>\n                    <span class=\'input-group-btn\'>\n                        <button type=\"submit\" has-permission=\"ROLE_USER\" ng-disabled=\"!chatForm.$valid\" class=\"input-sm btn btn-default\">Send</button>\n                    </span>\n                </div>\n            </form>\n\n            <div class=\'well\'>\n                <ul class=\'list-unstyled\'>\n                    <li ng-repeat=\'msg in mc.messages track by $index\'>\n                        <span class=\"glyphicon\" ng-class=\"{true: \'glyphicon-eye-open\', false: \'glyphicon-forward\'}[msg.private]\"></span>\n                        {{msg.message}}\n                    </li>\n                </ul>\n            </div>\n        </div>\n    </div>\n\n</div>");
+$templateCache.put("views/experiments/messaging.html","<div  class=\"container\">\n\n    <style scoped type=\"text/css\">\n        @import \"styles/messaging.css\";\n    </style>\n\n    <div class=\"panel panel-dark\">\n        <div class=\"panel-heading\">\n            <h3 class=\"panel-title\">Notifications\n                <div class=\"led pull-right\" ng-class=\"{0: \'led-yellow led-yellow-blink\', 1: \'led-green\', 2: \'led-blue\', 3: \'led-orange\', 4: \'led-red\'}[mc.readyState]\"></div>\n                <span class=\"pull-right\" >\n                    <span class=\"label change\" highlighter=\"mc.AAPL\" up-class=\"label-success\" down-class=\"label-danger\">AAPL: {{mc.AAPL}}</span>\n                    <span class=\"label change\" highlighter=\"mc.GOOG\" up-class=\"label-success\" down-class=\"label-danger\">GOOG: {{mc.GOOG}}</span>\n                    <span class=\"label change\" highlighter=\"mc.YHOO\" up-class=\"label-success\" down-class=\"label-danger\">YHOO: {{mc.YHOO}} </span>\n                    &nbsp;&nbsp;&nbsp;&nbsp;\n                </span>\n            </h3>\n        </div>\n        <div class=\"panel-body\">\n            <div class=\"well well-lg\">\n                <p ng-repeat=\'notification in mc.notifications track by $index\'  ng-class=\"{true: \'text-danger\', false: \'text-success\'}[notification.error === true]\">{{ notification.message }}</p>\n            </div>\n        </div>\n    </div>\n\n    <div class=\"row\">\n        <div class=\"col-md-offset-2 col-md-10\">\n            <ul class=\"nav nav-pills\">\n                <li ng-repeat=\'room in mc.rooms\' ng-click=\"mc.selectedRoom=room\" ng-class=\"{ active: (room == mc.selectedRoom) }\"><a>{{room}}</a></li>\n                <li class=\"pull-right\"><a class=\"btn\" ng-class=\"{true: \'btn-danger\', false: \'btn-success\'}[mc.joined]\" has-permission=\"ROLE_USER\" ng-click=\"mc.joinLeave()\">{{mc.joined ? \'Leave\': \'Join\'}}</a></li>\n            </ul>\n        </div>\n    </div>\n\n    <div class=\'row\'>\n        <div class=\'col-md-2\'>\n            <small class=\'marker\'>Presence</small>\n            <ul class=\"nav nav-pills nav-stacked\">\n                <li ng-repeat=\'user in mc.users\' ng-click=\"mc.selectedUser=user\" ng-class=\"{ active: (user == mc.selectedUser) }\"><a>{{user}}</a></li>\n            </ul>\n        </div>\n        <div class=\'col-md-10\'>\n            <small class=\'marker\'>Chat</small>\n            <form name=\"chatForm\" role=\"form\" ng-submit=\"mc.sendMessage(mc.newMessage)\" novalidate>\n                <div class=\'input-group\'>\n                    <input class=\'input-sm form-control\' ng-model=\'mc.newMessage\' type=\'text\' required>\n                    <span class=\'input-group-btn\'>\n                        <button type=\"submit\" has-permission=\"ROLE_USER\" ng-disabled=\"!chatForm.$valid\" class=\"input-sm btn btn-default\">Send</button>\n                    </span>\n                </div>\n            </form>\n\n            <div class=\'well\'>\n                <ul class=\'list-unstyled\'>\n                    <li ng-repeat=\'msg in mc.messages track by $index\'>\n                        <span class=\"glyphicon\" ng-class=\"{true: \'glyphicon-eye-open\', false: \'glyphicon-forward\'}[msg.private]\"></span>\n                        {{msg.message}}\n                    </li>\n                </ul>\n            </div>\n        </div>\n    </div>\n\n</div>\n");
 $templateCache.put("views/experiments/terminal.html","<div class=\"container\">\n    <style>\n        .terminal {\n            float: left;\n            border: #000 solid 5px;\n            font-family: \"DejaVu Sans Mono\", \"Liberation Mono\", monospace;\n            font-size: 11px;\n            color: #f0f0f0;\n            background: #000;\n        }\n\n        .terminal-cursor {\n            color: #000;\n            background: #f0f0f0;\n        }\n    </style>\n\n    <div id=\"terminal\"></div>\n</div>");
 $templateCache.put("views/experiments/testAuth.html","<div  class=\"container\">\n    <div class=\"jumbotron\">\n        <h1>Hello, {{lc.getCurrentUser().displayName}}!</h1>\n        <span ng-switch on=\"lc.getCurrentUser().authorities[0].authority\">\n            <span ng-switch-when=\"ROLE_BUSINESS_ADMIN\">You\'re business admin.</span>\n            <span ng-switch-when=\"ROLE_IT_ADMIN\">You\'re IT admin.</span>\n            <span ng-switch-when=\"ROLE_DATA_ADMIN\">You\'re data admin.</span>\n            <span ng-switch-when=\"ROLE_SUPER_ADMIN\">You\'re super admin.</span>\n            <span ng-switch-default>You\'re something else.</span>\n        </span>\n        <p>Cras justo odio, dapibus ac facilisis in, egestas eget quam. Fusce dapibus, tellus ac cursus\n            commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet.</p>\n        <p><a href=\"#\" has-permission=\"!ROLE_SUPER_ADMIN\" class=\"btn btn-primary btn-lg\" role=\"button\"> Enabled for non-Super Admins &raquo;</a></p>\n    </div>\n\n    <div class=\"row\">\n        <div class=\"col-md-4\">\n            <div class=\"panel panel-default\">\n                <div class=\"panel-heading\">\n                    <h3 class=\"panel-title\">IT Admin</h3>\n                </div>\n                <div class=\"panel-body\">\n                    <div has-permission=\"ROLE_IT_ADMIN\">Content for IT admin</div>\n                </div>\n            </div>\n            <div class=\"panel panel-primary\">\n                <div class=\"panel-heading\">\n                    <h3 class=\"panel-title\">Data Admin</h3>\n                </div>\n                <div class=\"panel-body\">\n                    <div has-permission=\"ROLE_DATA_ADMIN\">Content for Data admin</div>\n                </div>\n            </div>\n        </div><!-- /.col-md-4 -->\n        <div class=\"col-md-4\">\n            <div class=\"panel panel-success\">\n                <div class=\"panel-heading\">\n                    <h3 class=\"panel-title\">Business Admin</h3>\n                </div>\n                <div class=\"panel-body\">\n                    <div has-permission=\"ROLE_BUSINESS_ADMIN\">Content for Business admin</div>\n                </div>\n            </div>\n            <div class=\"panel panel-info\">\n                <div class=\"panel-heading\">\n                    <h3 class=\"panel-title\">Switch User</h3>\n                </div>\n                <div class=\"panel-body\">\n                    <div has-permission=\"ROLE_SWITCH_USER\">Content for Switch User</div>\n                </div>\n            </div>\n        </div><!-- /.col-md-4 -->\n        <div class=\"col-md-4\">\n            <div class=\"panel panel-warning\">\n                <div class=\"panel-heading\">\n                    <h3 class=\"panel-title\">Super Admin</h3>\n                </div>\n                <div class=\"panel-body\">\n                    <div has-permission=\"ROLE_SUPER_ADMIN\">Content for Super admin</div>\n                </div>\n            </div>\n            <div class=\"panel panel-danger\">\n                <div class=\"panel-heading\">\n                    <h3 class=\"panel-title\">User</h3>\n                </div>\n                <div class=\"panel-body\">\n                    <div has-permission=\"ROLE_USER\">Content for User</div>\n                </div>\n            </div>\n        </div><!-- /.col-md-4 -->\n    </div>\n\n    <div class=\"well\">\n        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas sed diam eget risus varius blandit sit amet non magna. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent commodo cursus magna, vel scelerisque nisl consectetur et. Cras mattis consectetur purus sit amet fermentum. Duis mollis, est non commodo luctus, nisi erat porttitor ligula, eget lacinia odio sem nec elit. Aenean lacinia bibendum nulla sed consectetur.</p>\n    </div>\n</div>");
 $templateCache.put("views/experiments/todo.html","<div  class=\"container\">\n    <div class=\"row\">\n        <div class=\"col-md-4 col-md-offset-3\">\n            <div class=\"panel panel-default\">\n                <div class=\"panel-heading\">\n                    <h3 class=\"panel-title\">ES6 Todo List</h3>\n                </div>\n                <div class=\"panel-body\">\n                    <form ng-submit=\"tc.addTodo()\">\n                        <input type=\"text\" ng-model=\"tc.newTodo\" class=\"form-control\" placeholder=\"New todo item goes here, then press Enter\" focus>\n                    </form>\n                    <br>\n                    <div class=\"list-group\">\n                        <div class=\"list-group-item todo-item\" ng-repeat=\"(key, todo) in tc.todos.todos\" ng-class=\"{\'todo-complete\': todo.done}\">\n                            <span class=\"close\" ng-click=\"tc.removeTodo(key)\">&times;</span>\n                            <label>\n                                <input type=\"checkbox\" ng-model=\"todo.done\">\n                                <span ng-bind=\"todo.text\">This is the content of the Todo</span>\n                            </label>\n                        </div>\n                    </div>\n                    <button class=\"btn btn-block btn-danger\" ng-click=\"tc.clearAll()\">Clear All Items</button>\n                </div>\n            </div>\n        </div>\n    </div>\n</div>");
@@ -47035,32 +47186,32 @@ $templateCache.put("views/home/home.html","<div  class=\"container\">\n\n    <!-
 $templateCache.put("views/providers/providers.detail.html","<!-- todo -->");
 $templateCache.put("views/providers/providers.html","<div  class=\"container\"  ui-view autoscroll=\"false\">\n\n    <style scoped type=\"text/css\">\n        @import \"styles/providers.css\";\n    </style>\n\n    <ui-view name=\"filters\" autoscroll=\"false\"></ui-view>\n\n    <br/>\n\n    <div class=\"row\" ui-view  name=\"map\" autoscroll=\"false\"></div>\n\n    <br/>\n\n</div>");
 $templateCache.put("views/providers/providers.map.html","<section class=\"row\">\n    <div class=\"col-md-12\">\n        <gm-map  gm-map-id=\"\'simpleMap\'\" gm-map-options=\"pmc.mapInitOptions\" gm-center=\"pmc.center.latLng\" gm-zoom=\"pmc.zoom\" gm-bounds=\"pmc.bounds\" class=\"map\">\n            <gm-markers gm-objects=\"providers\"\n                        gm-id=\"object.facilityId\"\n                        gm-marker-options=\"pmc.getProviderOpts(object)\"\n                        gm-position=\"{ lat: object.location.lat, lng: object.location.lng }\"\n                        gm-on-activatemarker=\"pmc.activateMarker(marker);\"\n                        gm-on-openinfowindow=\"infoWindow.open(marker.getMap(), marker);\"\n                        gm-on-openmouseoverinfowindow=\"mouseOverInfoWindow.open(marker.getMap(), marker);\"\n                        gm-on-closemouseoverinfowindow=\"mouseOverInfoWindow.close();\"\n                        gm-events=\"markerEvents\"\n                        gm-on-mouseover=\"pmc.onMouseOver(object, marker)\"\n                        gm-on-mouseout=\"pmc.onMouseOut(object, marker)\"\n                        gm-on-click=\"pmc.onProviderClick(object, marker)\">\n            </gm-markers>\n        </gm-map>\n        <div gm-info-window=\"infoWindow\">\n            <div>\n                <p><strong><abbr title=\"Phone\">&#9742;:</abbr> {{pmc.selectedProvider.facilityContactMechanism.phone}}</strong>  <strong>D:{{pmc.selectedProvider.distance | number:2}}</strong></p>\n                <rating ng-model=\"y\" ng-init=\"y = 3\" max=\"5\" readonly=\"false\"></rating>Rate Yourself!</span>\n                <address class=\"small\">\n                    <strong>{{pmc.selectedProvider.facilityType}}</strong><br>\n                    {{pmc.selectedProvider.facilityContactMechanism.address.addressLine1}}<br>\n                    {{pmc.selectedProvider.facilityContactMechanism.address.city}}, {{pmc.selectedProvider.facilityContactMechanism.address.state}} {{pmc.selectedProvider.facilityContactMechanism.address.zipcode}}<br>\n                </address>\n            </div>\n        </div>\n        <div gm-info-window=\"mouseOverInfoWindow\" gm-info-window-options=\"pmc.mouseOverInfoWindowOptions\">\n            <!-- TODO: show mouse over provider data, not selectedProvider -->\n            <div>{{pmc.selectedProvider.facilityName}}</div>\n            <div>{{pmc.selectedProvider.facilityType}}</div>\n        </div>\n        <ui-view name=\"results\" autoscroll=\"false\"></ui-view>\n        <aside class=\"search_btn_over_map\">\n            <a class=\"btn btn-default pull-right\" ng-click=\"doSearch()\" > <span class=\"glyphicon glyphicon-record\"></span> Search</a>\n        </aside>\n    </div>\n</section>\n\n<div class=\"text-info text-right\">\n    <span class=\"glyphicon glyphicon-screenshot\"></span>  {{pmc.center.latLng}}\n    <span class=\"glyphicon glyphicon-zoom-in\"></span> {{pmc.zoom}}\n</div>\n\n");
-$templateCache.put("views/providers/providers.results.html","<aside id=\"search_results_over_map\" class=\"col-md-4\">\n\n    <form class=\"form-group\">\n        <input  type=\"search\" class=\"form-control\" placeholder=\"Type to filter by name\" ng-model=\"prc.filterField\" ng-change=\"filterProviders()\">\n    </form>\n\n    <ol class=\"list-group\">\n        <li class=\"list-group-item slide-reveal\"\n            ng-repeat=\'provider in filteredProviders | startFrom:(prc.currentPage -1)*prc.itemsPerPage | limitTo:prc.itemsPerPage\'\n            ng-click=\"pmc.onProviderClick(provider)\">\n            <div class=\"panel\" ng-class=\"{ active: (pmc.selectedProvider.facilityId == provider.facilityId)}\">\n                <div class=\"panel-body\">\n                    <div class=\"pull-left\">\n                        <!--<img ng-src=\"http://lorempixel.com/100/100/people/{{$index}}\" /> -->\n                        <img ng-src=\"images/doc{{$index + 1}}.jpg\" />\n                        <br /><small>{{provider.facilityName | characters:12 :true}}</small>\n                    </div>\n                    <div class=\"pull-left\">\n                        <p><strong><abbr title=\"Phone\">&#9742;:</abbr> {{provider.facilityContactMechanism.phone}}</strong>  <strong>D:{{provider.distance | number:2}}</strong></p>\n                        <address class=\"small\">\n                            <strong>{{provider.facilityType | characters:26  :true}}</strong><br>\n                            {{provider.facilityContactMechanism.address.addressLine1 | characters:20  :true}}<br>\n                            {{provider.facilityContactMechanism.address.city | characters:15 :true}}, {{provider.facilityContactMechanism.address.state}} {{provider.facilityContactMechanism.address.zipcode}}<br>\n                        </address>\n                    </div>\n                    <span  class=\"pull-left\"><rating ng-model=\"y\" ng-init=\"y = 3\" max=\"5\" readonly=\"true\"></rating>Rate Yourself!</span>\n                </div>\n            </div>\n        </li>\n    </ol>\n    <pagination total-items=\"filteredProviders.length\" items-per-page=\"prc.itemsPerPage\" ng-model=\"prc.currentPage\" max-size=\"prc.maxSize\"  class=\"pagination-sm\"></pagination>\n</aside>\n\n");
+$templateCache.put("views/providers/providers.results.html","<aside id=\"search_results_over_map\" class=\"col-md-4\">\n\n    <form class=\"form-group has-feedback has-no-label\">\n        <input  type=\"search\" class=\"form-control\" placeholder=\"Type to filter by name\" ng-model=\"prc.filterField\" ng-change=\"filterProviders()\">\n        <span class=\"glyphicon glyphicon-filter form-control-feedback\"></span>\n    </form>\n\n    <ol class=\"list-group\">\n        <li class=\"list-group-item slide-reveal\"\n            ng-repeat=\'provider in filteredProviders | startFrom:(prc.currentPage -1)*prc.itemsPerPage | limitTo:prc.itemsPerPage\'\n            ng-click=\"pmc.onProviderClick(provider)\">\n            <div class=\"panel\" ng-class=\"{ active: (pmc.selectedProvider.facilityId == provider.facilityId)}\">\n                <div class=\"panel-body\">\n                    <div class=\"pull-left\">\n                        <!--<img ng-src=\"http://lorempixel.com/100/100/people/{{$index}}\" /> -->\n                        <img ng-src=\"images/doc{{$index + 1}}.jpg\" />\n                        <br /><small>{{provider.facilityName | characters:12 :true}}</small>\n                    </div>\n                    <div class=\"pull-left\">\n                        <p><strong><abbr title=\"Phone\">&#9742;:</abbr> {{provider.facilityContactMechanism.phone}}</strong>  <strong>D:{{provider.distance | number:2}}</strong></p>\n                        <address class=\"small\">\n                            <strong>{{provider.facilityType | characters:26  :true}}</strong><br>\n                            {{provider.facilityContactMechanism.address.addressLine1 | characters:20  :true}}<br>\n                            {{provider.facilityContactMechanism.address.city | characters:15 :true}}, {{provider.facilityContactMechanism.address.state}} {{provider.facilityContactMechanism.address.zipcode}}<br>\n                        </address>\n                    </div>\n                    <span  class=\"pull-left\"><rating ng-model=\"y\" ng-init=\"y = 3\" max=\"5\" readonly=\"true\"></rating>Rate Yourself!</span>\n                </div>\n            </div>\n        </li>\n    </ol>\n    <pagination total-items=\"filteredProviders.length\" items-per-page=\"prc.itemsPerPage\" ng-model=\"prc.currentPage\" max-size=\"prc.maxSize\"  class=\"pagination-sm\"></pagination>\n</aside>\n\n");
 $templateCache.put("views/providers/providers.search.html","<section class=\"row\" collapse=\"psc.searchCollapsed\">\n    <form name=\"searchForm\" class=\"form-horizontal\" role=\"form\" ng-submit=\"doSearch()\" novalidate>\n        <div class=\"form-group\">\n            <div class=\"col-md-4 col-md-offset-1\" ng-class=\"{\'has-error\': searchForm.specialty.$invalid}\">\n                <input type=\"text\" name=\"specialty\" class=\"form-control\" placeholder=\"Name, specialty, procedures, more...\"\n                       ng-model=\"psc.providerSearchParams.specialty\"  ng-model-options=\"{ debounce: 300 }\"\n                       typeahead=\"specialty for specialty in psc.getSpecialities($viewValue)\"\n                       typeahead-editable=\"false\">\n\n            </div>\n            <!--<div class=\"col-md-1\">-->\n            <!--<button type=\"button\" class=\"form-control btn btn-default btn-sm\">Add Filter</button>-->\n            <!--</div>-->\n            <div class=\"col-md-6\">\n                <div class=\"input-group\" ng-class=\"{\'has-error\': searchForm.address.$invalid}\">\n                    <div class=\"input-group-btn\" dropdown  is-open=\"psc.status.isopen\">\n                        <button type=\"button\" class=\"btn btn-default dropdown-toggle\" ng-disabled=\"disabled\">\n                            Within {{psc.providerSearchParams.distance}} miles    <span class=\"caret\"></span>\n                        </button>\n                        <ul class=\"dropdown-menu\" role=\"menu\">\n                            <li><a ng-click=\"psc.setDistance(\'1\')\">Within 1 miles    </a></li>\n                            <li><a ng-click=\"psc.setDistance(\'2\')\">Within 2 miles    </a></li>\n                            <li><a ng-click=\"psc.setDistance(\'5\')\">Within 5 miles    </a></li>\n                            <li><a ng-click=\"psc.setDistance(\'10\')\">Within 10 miles  </a></li>\n                            <li><a ng-click=\"psc.setDistance(\'15\')\">Within 15 miles  </a></li>\n                            <li><a ng-click=\"psc.setDistance(\'25\')\">Within 25 miles  </a></li>\n                            <li><a ng-click=\"psc.setDistance(\'50\')\">Within 50 miles  </a></li>\n                            <li><a ng-click=\"psc.setDistance(\'75\')\">Within 75 miles  </a></li>\n                            <li><a ng-click=\"psc.setDistance(\'100\')\">Within 100 miles</a></li>\n                        </ul>\n                    </div>\n\n                    <input type=\"text\" name=\"address\" class=\"form-control\" placeholder=\"Zip, City or Address...\"\n                           ng-model=\"psc.providerSearchGeolocation.address\"\n                           typeahead=\"address as address.formatted_address for address in psc.getLocations($viewValue)\"\n                           typeahead-min-length=\"3\" ng-model-options=\"{ debounce: 300 }\"\n                           typeahead-on-select=\"psc.onSelect($item, $model, $label)\"\n                           typeahead-loading=\"loadingLocations\"  typeahead-editable=\"false\" required>\n                    <i ng-show=\"loadingLocations\" class=\"glyphicon glyphicon-refresh\"></i>\n\n                    <span class=\"input-group-btn\">\n                        <button class=\"btn btn-default\" ng-disabled=\"searchForm.$invalid\"  title=\"search\" type=\"submit\"><span class=\"glyphicon glyphicon-search\"></span></button>\n                    </span>\n                </div>\n            </div>\n        </div>\n    </form>\n</section>\n<section class=\"row\">\n    <span class=\"btn btn-info disabled pull-left\">Total <span class=\"badge\">{{providers.metadata.total}}</span>    Offset <span class=\"badge\">{{providers.metadata.offset}}</span></span>\n    <!-- TODO: use custom pagination template -->\n    <a class=\"btn btn-link col-md-offset-1\" ng-disabled=\"providers.metadata.offset <=0\" ng-click=\"psc.dbCursorMove(-100)\" role=\"button\">&laquo; Previous from DB</a>\n    <a class=\"btn btn-link\" ng-disabled=\"providers.metadata.total - providers.metadata.offset <= 100\" ng-click=\"psc.dbCursorMove(100)\" role=\"button\"> Next from DB &raquo;</a>\n\n    <a class=\"btn btn-default pull-right \" ng-click=\"psc.searchCollapsed = !psc.searchCollapsed\">\n        <span class=\"glyphicon\" ng-class=\"psc.searchCollapsed ? \'glyphicon-arrow-down\': \'glyphicon-arrow-up\'\"></span> Search\n    </a>\n</section>");}]);
 define("templates", ["angular"], function(){});
 
 define('index',['./vendor', 'diary/diary', 'diary/reporters/console', './common/index', './home/index', './drug/index', './provider/index', './experiments/index', './test.env', './templates'], function($__0,$__1,$__3,$__5,$__7,$__9,$__11,$__13,$__15,$__17) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__1 || !$__1.__esModule)
-    $__1 = {'default': $__1};
+    $__1 = {default: $__1};
   if (!$__3 || !$__3.__esModule)
-    $__3 = {'default': $__3};
+    $__3 = {default: $__3};
   if (!$__5 || !$__5.__esModule)
-    $__5 = {'default': $__5};
+    $__5 = {default: $__5};
   if (!$__7 || !$__7.__esModule)
-    $__7 = {'default': $__7};
+    $__7 = {default: $__7};
   if (!$__9 || !$__9.__esModule)
-    $__9 = {'default': $__9};
+    $__9 = {default: $__9};
   if (!$__11 || !$__11.__esModule)
-    $__11 = {'default': $__11};
+    $__11 = {default: $__11};
   if (!$__13 || !$__13.__esModule)
-    $__13 = {'default': $__13};
+    $__13 = {default: $__13};
   if (!$__15 || !$__15.__esModule)
-    $__15 = {'default': $__15};
+    $__15 = {default: $__15};
   if (!$__17 || !$__17.__esModule)
-    $__17 = {'default': $__17};
+    $__17 = {default: $__17};
   $__0;
   var Diary = $__1.Diary;
   var ConsoleReporter = $__3.ConsoleReporter;
@@ -47176,13 +47327,13 @@ define('index',['./vendor', 'diary/diary', 'diary/reporters/console', './common/
 define('bootstrap',['angular', 'es6-shim', 'traceur-runtime', './index'], function($__0,$__2,$__3,$__4) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   if (!$__3 || !$__3.__esModule)
-    $__3 = {'default': $__3};
+    $__3 = {default: $__3};
   if (!$__4 || !$__4.__esModule)
-    $__4 = {'default': $__4};
+    $__4 = {default: $__4};
   var ng = $__0.default;
   $__2;
   $__3;

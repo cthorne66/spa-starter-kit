@@ -180,7 +180,7 @@ define('drug/services/DrugService',[], function() {
 define('drug/controllers/DrugSearchController',['../services/DrugService'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   var $__1 = $__0,
       DRUG_LIST_PARAMS = $__1.DRUG_LIST_PARAMS,
       DRUG_SEARCH_PARAMS = $__1.DRUG_SEARCH_PARAMS;
@@ -268,15 +268,15 @@ define('drug/controllers/DrugDetailController',[], function() {
 define('drug/index',['./routes', './controllers/DrugSearchController', './controllers/DrugResultsController', './controllers/DrugDetailController', './services/DrugService'], function($__0,$__2,$__4,$__6,$__8) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   if (!$__4 || !$__4.__esModule)
-    $__4 = {'default': $__4};
+    $__4 = {default: $__4};
   if (!$__6 || !$__6.__esModule)
-    $__6 = {'default': $__6};
+    $__6 = {default: $__6};
   if (!$__8 || !$__8.__esModule)
-    $__8 = {'default': $__8};
+    $__8 = {default: $__8};
   var routes = $__0.default;
   var DrugSearchController = $__2.default;
   var DrugResultsController = $__4.default;

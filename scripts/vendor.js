@@ -26136,33 +26136,33 @@ define("AngularGM", ["angular"], function(){});
 define('vendor',['angular-animate', 'angular-sanitize', 'angular-growl', 'angular-cache', 'angular-bootstrap', 'angular-ui-router', 'angular-truncate', 'angular-translate', 'angular-translate-loader-partial', 'http-auth-interceptor', 'restangular', 'xeditable', 'ng-table', 'AngularGM'], function($__0,$__1,$__2,$__3,$__4,$__5,$__6,$__7,$__8,$__9,$__10,$__11,$__12,$__13) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__1 || !$__1.__esModule)
-    $__1 = {'default': $__1};
+    $__1 = {default: $__1};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   if (!$__3 || !$__3.__esModule)
-    $__3 = {'default': $__3};
+    $__3 = {default: $__3};
   if (!$__4 || !$__4.__esModule)
-    $__4 = {'default': $__4};
+    $__4 = {default: $__4};
   if (!$__5 || !$__5.__esModule)
-    $__5 = {'default': $__5};
+    $__5 = {default: $__5};
   if (!$__6 || !$__6.__esModule)
-    $__6 = {'default': $__6};
+    $__6 = {default: $__6};
   if (!$__7 || !$__7.__esModule)
-    $__7 = {'default': $__7};
+    $__7 = {default: $__7};
   if (!$__8 || !$__8.__esModule)
-    $__8 = {'default': $__8};
+    $__8 = {default: $__8};
   if (!$__9 || !$__9.__esModule)
-    $__9 = {'default': $__9};
+    $__9 = {default: $__9};
   if (!$__10 || !$__10.__esModule)
-    $__10 = {'default': $__10};
+    $__10 = {default: $__10};
   if (!$__11 || !$__11.__esModule)
-    $__11 = {'default': $__11};
+    $__11 = {default: $__11};
   if (!$__12 || !$__12.__esModule)
-    $__12 = {'default': $__12};
+    $__12 = {default: $__12};
   if (!$__13 || !$__13.__esModule)
-    $__13 = {'default': $__13};
+    $__13 = {default: $__13};
   $__0;
   $__1;
   $__2;

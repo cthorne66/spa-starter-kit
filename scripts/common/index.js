@@ -34,7 +34,7 @@ define('diary/diary',[], function() {
           $__2; !($__2 = $__1.next()).done; ) {
         var target = $__2.value;
         {
-          var $__3 = $traceurRuntime.assertObject(target),
+          var $__3 = target,
               config = $__3.config,
               reporter = $__3.reporter;
           if ((config.level.indexOf('*') !== -1 || config.level.indexOf(level) !== -1) && (config.group.indexOf('*') !== -1 || config.group.indexOf(group) !== -1)) {
@@ -170,7 +170,7 @@ define('common/utils/util',[], function() {
 define('common/services/AuthenticationService',['../../common/utils/util'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   
   var serialize = $__0.serialize;
   var AUTH_CONFIG = {
@@ -278,9 +278,9 @@ define('common/services/AuthenticationService',['../../common/utils/util'], func
 define('common/services/UserService',['./AuthenticationService', 'diary/diary'], function($__0,$__2) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   var AUTH_CONFIG = $__0.AUTH_CONFIG;
   var Diary = $__2.Diary;
   var USER_KEY = '_currentUser';
@@ -344,13 +344,13 @@ define('common/services/UserService',['./AuthenticationService', 'diary/diary'],
 define('common/controllers/LoginController',['diary/diary', '../services/AuthenticationService', '../services/UserService', '../services/AuthenticationService'], function($__0,$__2,$__4,$__6) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   if (!$__4 || !$__4.__esModule)
-    $__4 = {'default': $__4};
+    $__4 = {default: $__4};
   if (!$__6 || !$__6.__esModule)
-    $__6 = {'default': $__6};
+    $__6 = {default: $__6};
   var Diary = $__0.Diary;
   var AuthenticationServiceClass = $__2.AuthenticationService;
   var UserServiceClass = $__4.default;
@@ -656,7 +656,7 @@ define('common/services/AuthorizationService',[], function() {
 define('common/elements/hasPermission',['../services/AuthenticationService'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   
   var AUTH_EVENTS = $__0.AUTH_EVENTS;
   function hasPermission(AuthorizationService) {
@@ -695,7 +695,7 @@ define('common/elements/hasPermission',['../services/AuthenticationService'], fu
 define('common/utils/AuthInterceptor',['../services/AuthenticationService'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   var AUTH_EVENTS = $__0.AUTH_EVENTS;
   function AuthInterceptor($rootScope, $q, httpBuffer) {
     
@@ -3613,7 +3613,7 @@ define("stomp", function(){});
 define('common/utils/Enum',[], function() {
   
   var EnumSymbol = function EnumSymbol(name, $__6, value) {
-    var value = $traceurRuntime.assertObject($__6).value;
+    var value = $__6.value;
     this.name = name;
     this.value = (value !== undefined) ? value : Symbol(name);
     delete arguments[1].value;
@@ -7610,9 +7610,9 @@ define("reflect", ["es6-shim"], (function (global) {
 define('resiliency/Retry',['../common/utils/Enum', 'reflect'], function($__0,$__2) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   var $__1 = $__0,
       EnumSymbol = $__1.EnumSymbol,
       Enum = $__1.Enum;
@@ -7633,7 +7633,7 @@ define('resiliency/Retry',['../common/utils/Enum', 'reflect'], function($__0,$__
         $__12,
         $__13,
         $__14;
-    var $__9 = $traceurRuntime.assertObject($__8),
+    var $__9 = $__8,
         maxTries = ($__10 = $__9.maxTries) === void 0 ? 1 : $__10,
         maxDelay = ($__11 = $__9.maxDelay) === void 0 ? Infinity : $__11,
         delayRatio = ($__12 = $__9.delayRatio) === void 0 ? 1 : $__12,
@@ -7901,13 +7901,13 @@ define('resiliency/Retry',['../common/utils/Enum', 'reflect'], function($__0,$__
 define('common/services/EventBus',['sockjs', 'stomp', '../utils/Enum', '../../resiliency/Retry'], function($__0,$__1,$__2,$__4) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__1 || !$__1.__esModule)
-    $__1 = {'default': $__1};
+    $__1 = {default: $__1};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   if (!$__4 || !$__4.__esModule)
-    $__4 = {'default': $__4};
+    $__4 = {default: $__4};
   $__0;
   $__1;
   var $__3 = $__2,
@@ -8107,25 +8107,25 @@ define('common/services/EventBus',['sockjs', 'stomp', '../utils/Enum', '../../re
 define('common/index',['./routes', './controllers/LoginController', './controllers/SettingsController', './services/AuthenticationService', './services/AuthorizationService', './services/UserService', './elements/hasPermission', './utils/AuthInterceptor', './services/EventBus', '../resiliency/Retry'], function($__0,$__2,$__4,$__6,$__8,$__10,$__12,$__14,$__16,$__18) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   if (!$__4 || !$__4.__esModule)
-    $__4 = {'default': $__4};
+    $__4 = {default: $__4};
   if (!$__6 || !$__6.__esModule)
-    $__6 = {'default': $__6};
+    $__6 = {default: $__6};
   if (!$__8 || !$__8.__esModule)
-    $__8 = {'default': $__8};
+    $__8 = {default: $__8};
   if (!$__10 || !$__10.__esModule)
-    $__10 = {'default': $__10};
+    $__10 = {default: $__10};
   if (!$__12 || !$__12.__esModule)
-    $__12 = {'default': $__12};
+    $__12 = {default: $__12};
   if (!$__14 || !$__14.__esModule)
-    $__14 = {'default': $__14};
+    $__14 = {default: $__14};
   if (!$__16 || !$__16.__esModule)
-    $__16 = {'default': $__16};
+    $__16 = {default: $__16};
   if (!$__18 || !$__18.__esModule)
-    $__18 = {'default': $__18};
+    $__18 = {default: $__18};
   var routes = $__0.default;
   var $__3 = $__2,
       LoginController = $__3.LoginController,

@@ -47,7 +47,7 @@ define('async',[],function(){
 define('provider/utils/gMaps',['async!//maps.googleapis.com/maps/api/js?key=AIzaSyCOPhbBgg7Rb8SS_f4iC-w9zIB-vD44ZkQ&sensor=false'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   $__0;
   var $__default = window.google.maps;
   return {
@@ -61,7 +61,7 @@ define('provider/utils/gMaps',['async!//maps.googleapis.com/maps/api/js?key=AIza
 define('provider/models/GeoLocation',['../utils/gMaps'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   var gMaps = $__0.default;
   var LatLng = gMaps.LatLng;
   var _latLng = Symbol('_latLng', true);
@@ -91,7 +91,7 @@ define('provider/models/GeoLocation',['../utils/gMaps'], function($__0) {
 define('provider/services/ProviderService',['../models/GeoLocation'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   var GeoLocation = $__0.default;
   var PROVIDER_SEARCH_CONFIG = {BASE_API_URL: 'http://localhost:8080/<YourBaaS>/ProviderSearchAPI'};
   function ProviderRestangular(Restangular) {
@@ -204,7 +204,7 @@ define('provider/services/ProviderService',['../models/GeoLocation'], function($
 define('provider/routes',['./services/ProviderService'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   var $__1 = $__0,
       PROVIDER_SEARCH_GEOLOCATION = $__1.PROVIDER_SEARCH_GEOLOCATION,
       PROVIDER_SEARCH_PARAMS = $__1.PROVIDER_SEARCH_PARAMS;
@@ -267,7 +267,7 @@ define('provider/routes',['./services/ProviderService'], function($__0) {
 define('provider/controllers/ProviderSearchController',['../services/ProviderService'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   var $__1 = $__0,
       PROVIDER_SEARCH_PARAMS = $__1.PROVIDER_SEARCH_PARAMS,
       PROVIDER_SEARCH_GEOLOCATION = $__1.PROVIDER_SEARCH_GEOLOCATION;
@@ -364,9 +364,9 @@ define('provider/controllers/ProviderResultsController',[], function() {
 define('provider/controllers/ProviderMapController',['../utils/gMaps', '../services/ProviderService'], function($__0,$__2) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   var gMaps = $__0.default;
   var PROVIDER_SEARCH_GEOLOCATION = $__2.PROVIDER_SEARCH_GEOLOCATION;
   var scope = Symbol('scope', true);
@@ -410,9 +410,9 @@ define('provider/controllers/ProviderMapController',['../utils/gMaps', '../servi
             } catch ($__8) {
               {
                 {
-                  $__8 = $traceurRuntime.assertObject($__7.value);
-                  latX = $traceurRuntime.assertObject($__8.location).lat;
-                  lngX = $traceurRuntime.assertObject($__8.location).lng;
+                  $__8 = $__7.value;
+                  latX = $__8.location.lat;
+                  lngX = $__8.location.lng;
                 }
                 {
                   bounds.extend(new gMaps.LatLng(latX, lngX));
@@ -485,7 +485,7 @@ define('provider/controllers/ProviderDetailController',[], function() {
 define('provider/services/GeolocationService',['../models/GeoLocation'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   var GeoLocation = $__0.default;
   var q = Symbol('q', true);
   var http = Symbol('http', true);
@@ -578,7 +578,7 @@ define('provider/services/GeolocationService',['../models/GeoLocation'], functio
 define('provider/services/GeocoderService',['../utils/gMaps'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   var gMaps = $__0.default;
   var GeocoderService = function GeocoderService() {
     console.info('in GeocoderService constructor....');
@@ -629,23 +629,23 @@ define('provider/utils/StartFromFilter',[], function() {
 define('provider/index',['./routes', './controllers/ProviderSearchController', './controllers/ProviderResultsController', './controllers/ProviderMapController', './controllers/ProviderDetailController', './services/GeolocationService', './services/GeocoderService', './services/ProviderService', './utils/StartFromFilter'], function($__0,$__2,$__4,$__6,$__8,$__10,$__12,$__14,$__16) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   if (!$__4 || !$__4.__esModule)
-    $__4 = {'default': $__4};
+    $__4 = {default: $__4};
   if (!$__6 || !$__6.__esModule)
-    $__6 = {'default': $__6};
+    $__6 = {default: $__6};
   if (!$__8 || !$__8.__esModule)
-    $__8 = {'default': $__8};
+    $__8 = {default: $__8};
   if (!$__10 || !$__10.__esModule)
-    $__10 = {'default': $__10};
+    $__10 = {default: $__10};
   if (!$__12 || !$__12.__esModule)
-    $__12 = {'default': $__12};
+    $__12 = {default: $__12};
   if (!$__14 || !$__14.__esModule)
-    $__14 = {'default': $__14};
+    $__14 = {default: $__14};
   if (!$__16 || !$__16.__esModule)
-    $__16 = {'default': $__16};
+    $__16 = {default: $__16};
   var routes = $__0.default;
   var ProviderSearchController = $__2.default;
   var ProviderResultsController = $__4.default;

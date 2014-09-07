@@ -1,7 +1,7 @@
 define(['chroma'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   
   var chroma = $__0.default;
   function led() {

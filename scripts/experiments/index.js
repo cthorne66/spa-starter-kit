@@ -76,7 +76,7 @@ define('diary/diary',[], function() {
           $__2; !($__2 = $__1.next()).done; ) {
         var target = $__2.value;
         {
-          var $__3 = $traceurRuntime.assertObject(target),
+          var $__3 = target,
               config = $__3.config,
               reporter = $__3.reporter;
           if ((config.level.indexOf('*') !== -1 || config.level.indexOf(level) !== -1) && (config.group.indexOf('*') !== -1 || config.group.indexOf(group) !== -1)) {
@@ -133,7 +133,7 @@ define('diary/diary',[], function() {
 define('experiments/services/EmailService',['diary/diary'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   var Diary = $__0.Diary;
   var EmailService = function EmailService() {
     this.logger = Diary.logger('EmailService');
@@ -246,7 +246,7 @@ define('di/util',[], function() {
 define('di/annotations',['./util'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   var isFunction = $__0.isFunction;
   var SuperConstructor = function SuperConstructor() {};
   ($traceurRuntime.createClass)(SuperConstructor, {}, {});
@@ -401,7 +401,7 @@ define('di/annotations',['./util'], function($__0) {
 define('di/profiler',['./util'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   var toString = $__0.toString;
   var IS_DEBUG = false;
   var _global = null;
@@ -478,9 +478,9 @@ define('di/profiler',['./util'], function($__0) {
 define('di/providers',['./annotations', './util'], function($__0,$__2) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   var $__1 = $__0,
       SuperConstructorAnnotation = $__1.SuperConstructor,
       readAnnotations = $__1.readAnnotations;
@@ -578,13 +578,13 @@ define('di/providers',['./annotations', './util'], function($__0,$__2) {
 define('di/injector',['./annotations', './util', './profiler', './providers'], function($__0,$__2,$__4,$__6) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   if (!$__4 || !$__4.__esModule)
-    $__4 = {'default': $__4};
+    $__4 = {default: $__4};
   if (!$__6 || !$__6.__esModule)
-    $__6 = {'default': $__6};
+    $__6 = {default: $__6};
   var $__1 = $__0,
       annotate = $__1.annotate,
       readAnnotations = $__1.readAnnotations,
@@ -820,9 +820,9 @@ define('di/injector',['./annotations', './util', './profiler', './providers'], f
 define('di/index',['./injector', './annotations'], function($__0,$__1) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__1 || !$__1.__esModule)
-    $__1 = {'default': $__1};
+    $__1 = {default: $__1};
   var $__injector__ = $__0;
   var $__annotations__ = $__1;
   return {
@@ -884,7 +884,7 @@ define('experiments/models/TodoItem',[], function() {
 define('common/utils/Generators',['di/index'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   
   var $__1 = $__0,
       Provide = $__1.Provide,
@@ -1104,13 +1104,13 @@ define('common/utils/Generators',['di/index'], function($__0) {
 define('experiments/models/TodoList',['./TodoItem', '../../common/utils/Generators', 'di/index', 'diary/diary'], function($__0,$__2,$__4,$__6) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   if (!$__4 || !$__4.__esModule)
-    $__4 = {'default': $__4};
+    $__4 = {default: $__4};
   if (!$__6 || !$__6.__esModule)
-    $__6 = {'default': $__6};
+    $__6 = {default: $__6};
   var Todo = $__0.default;
   var Generators = $__2.Generators;
   var Inject = $__4.Inject;
@@ -1214,7 +1214,7 @@ define('experiments/models/TodoList',['./TodoItem', '../../common/utils/Generato
 define('common/utils/generators',['di/index'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   
   var $__1 = $__0,
       Provide = $__1.Provide,
@@ -1434,11 +1434,11 @@ define('common/utils/generators',['di/index'], function($__0) {
 define('experiments/controllers/TodoController',['di/index', '../models/TodoList', '../../common/utils/generators'], function($__0,$__2,$__4) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   if (!$__4 || !$__4.__esModule)
-    $__4 = {'default': $__4};
+    $__4 = {default: $__4};
   var Injector = $__0.Injector;
   var TodoList = $__2.default;
   var Generators = $__4.Generators;
@@ -10258,15 +10258,15 @@ define("term", function(){});
 define('experiments/controllers/TerminalController',['sockjs', 'stomp', 'term'], function($__0,$__1,$__2) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__1 || !$__1.__esModule)
-    $__1 = {'default': $__1};
+    $__1 = {default: $__1};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   $__0;
   $__1;
   $__2;
-  var TerminalController = function TerminalController($scope, $eventBus) {
+  var TerminalController = function TerminalController($scope, $stateParams, $eventBus) {
     var $__3 = this;
     this.term = new Terminal({
       cols: 150,
@@ -10282,7 +10282,7 @@ define('experiments/controllers/TerminalController',['sockjs', 'stomp', 'term'],
     this.term.open(divTerminal);
     this.term.write('\x1b[31mWelcome to term.js!\x1b[m\r\n');
     this.term.on('data', (function(data) {
-      $eventBus.publish('/app/terminal/input', data);
+      $eventBus.publish(("/app/terminal/input/" + $stateParams.containerId), data);
     }));
     var onLogMessage = (function(log) {
       $__3.term.write(JSON.parse(log.body) + '\r\n');
@@ -10295,7 +10295,7 @@ define('experiments/controllers/TerminalController',['sockjs', 'stomp', 'term'],
     });
     $eventBus.registerHandler('/topic/terminal/log', onLogMessage);
     $eventBus.registerHandler('/topic/terminal/error', onLogError);
-    $eventBus.registerHandler('/user/queue/terminal/input', onKeyStroke);
+    $eventBus.registerHandler(("/user/queue/terminal/input/" + $stateParams.containerId), onKeyStroke);
     $scope.$on('$destroy', (function() {
       $eventBus.unregisterHandler('/topic/terminal/log');
       $eventBus.unregisterHandler('/topic/terminal/error');
@@ -10447,9 +10447,9 @@ define('experiments/services/PrimeGenerator',[], function() {
 define('experiments/controllers/ExperimentController',['diary/diary', '../services/PrimeGenerator'], function($__0,$__2) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   var Diary = $__0.Diary;
   var $__3 = $__2,
       take = $__3.take,
@@ -10572,7 +10572,7 @@ define('experiments/controllers/ElementsController',[], function() {
 define('experiments/controllers/GrowlTranslateDemoController',['diary/diary'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   var Diary = $__0.Diary;
   var GrowlTranslateDemoController = function GrowlTranslateDemoController($scope, growl, $translate, AuthorizationService) {
     var $__2 = this;
@@ -10693,9 +10693,9 @@ define('common/utils/util',[], function() {
 define('experiments/elements/myElement/MyElement',['../../../common/utils/util', 'diary/diary'], function($__0,$__2) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   var $__1 = $__0,
       loadDOMFromString = $__1.loadDOMFromString,
       loadDOMFromLink = $__1.loadDOMFromLink;
@@ -10789,7 +10789,7 @@ define('experiments/elements/customButton/CustomButton',[], function() {
 define('experiments/elements/myNews/MyNews',['../../../common/utils/util'], function($__0) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   var $__1 = $__0,
       loadDOMFromString = $__1.loadDOMFromString,
       loadDOMFromLink = $__1.loadDOMFromLink;
@@ -10860,29 +10860,29 @@ define('experiments/elements/highlighter',[], function() {
 define('experiments/index',['./routes', './services/EmailService', './controllers/TodoController', './controllers/MessagingController', './controllers/TerminalController', './controllers/ExperimentController', './controllers/ElementsController', './controllers/GrowlTranslateDemoController', './elements/myElement/MyElement', './elements/customButton/CustomButton', './elements/myNews/MyNews', './elements/highlighter'], function($__0,$__2,$__4,$__6,$__8,$__10,$__12,$__14,$__16,$__18,$__20,$__22) {
   
   if (!$__0 || !$__0.__esModule)
-    $__0 = {'default': $__0};
+    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
-    $__2 = {'default': $__2};
+    $__2 = {default: $__2};
   if (!$__4 || !$__4.__esModule)
-    $__4 = {'default': $__4};
+    $__4 = {default: $__4};
   if (!$__6 || !$__6.__esModule)
-    $__6 = {'default': $__6};
+    $__6 = {default: $__6};
   if (!$__8 || !$__8.__esModule)
-    $__8 = {'default': $__8};
+    $__8 = {default: $__8};
   if (!$__10 || !$__10.__esModule)
-    $__10 = {'default': $__10};
+    $__10 = {default: $__10};
   if (!$__12 || !$__12.__esModule)
-    $__12 = {'default': $__12};
+    $__12 = {default: $__12};
   if (!$__14 || !$__14.__esModule)
-    $__14 = {'default': $__14};
+    $__14 = {default: $__14};
   if (!$__16 || !$__16.__esModule)
-    $__16 = {'default': $__16};
+    $__16 = {default: $__16};
   if (!$__18 || !$__18.__esModule)
-    $__18 = {'default': $__18};
+    $__18 = {default: $__18};
   if (!$__20 || !$__20.__esModule)
-    $__20 = {'default': $__20};
+    $__20 = {default: $__20};
   if (!$__22 || !$__22.__esModule)
-    $__22 = {'default': $__22};
+    $__22 = {default: $__22};
   var routes = $__0.default;
   var EmailService = $__2.default;
   var TodoController = $__4.default;
