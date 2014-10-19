@@ -10672,8 +10672,19 @@ define('common/utils/util',[], function() {
     var source = buffer.join('&').replace(/%20/g, '+');
     return (source);
   }
+  function isProxySupported() {
+    try {
+      return typeof Proxy !== 'undefined' && new Proxy({}, {get: function() {
+          return 5;
+        }}).foo === 5;
+    } catch (err) {}
+    return false;
+  }
   ;
   return {
+    get isProxySupported() {
+      return isProxySupported;
+    },
     get loadDOMFromString() {
       return loadDOMFromString;
     },

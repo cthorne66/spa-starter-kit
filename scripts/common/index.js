@@ -149,8 +149,19 @@ define('common/utils/util',[], function() {
     var source = buffer.join('&').replace(/%20/g, '+');
     return (source);
   }
+  function isProxySupported() {
+    try {
+      return typeof Proxy !== 'undefined' && new Proxy({}, {get: function() {
+          return 5;
+        }}).foo === 5;
+    } catch (err) {}
+    return false;
+  }
   ;
   return {
+    get isProxySupported() {
+      return isProxySupported;
+    },
     get loadDOMFromString() {
       return loadDOMFromString;
     },
@@ -3610,7 +3621,7 @@ if (typeof define === 'function' && define.amd) {
 
 define("stomp", function(){});
 
-define('common/utils/Enum',[], function() {
+define('utils/Enum',[], function() {
   
   var EnumSymbol = function EnumSymbol(name, $__6, value) {
     var value = $__6.value;
@@ -3684,7 +3695,7 @@ define('common/utils/Enum',[], function() {
   };
 });
 
-// ES6-shim 0.13.0 (c) 2013-2014 Paul Miller (http://paulmillr.com)
+// ES6-shim 0.16.0 (c) 2013-2014 Paul Miller (http://paulmillr.com)
 // ES6-shim may be freely distributed under the MIT license.
 // For more details and documentation:
 // https://github.com/paulmillr/es6-shim/
@@ -3785,7 +3796,7 @@ define('common/utils/Enum',[], function() {
     // work properly with each other, even though we don't have full Iterator
     // support.  That is, `Array.from(map.keys())` will work, but we don't
     // pretend to export a "real" Iterator interface.
-    var $iterator$ = (typeof Symbol === 'object' && Symbol.iterator) ||
+    var $iterator$ = (typeof Symbol === 'function' && Symbol.iterator) ||
       '_es6shim_iterator_';
     // Firefox ships a partial implementation using the name @@iterator.
     // https://bugzilla.mozilla.org/show_bug.cgi?id=907077#c14
@@ -4014,8 +4025,8 @@ define('common/utils/Enum',[], function() {
         // Bits to bytes
         bytes = [];
         while (str.length) {
-          bytes.push(parseInt(str.substring(0, 8), 2));
-          str = str.substring(8);
+          bytes.push(parseInt(str.slice(0, 8), 2));
+          str = str.slice(8);
         }
         return bytes;
       }
@@ -4037,9 +4048,9 @@ define('common/utils/Enum',[], function() {
 
         // Unpack sign, exponent, fraction
         bias = (1 << (ebits - 1)) - 1;
-        s = parseInt(str.substring(0, 1), 2) ? -1 : 1;
-        e = parseInt(str.substring(1, 1 + ebits), 2);
-        f = parseInt(str.substring(1 + ebits), 2);
+        s = parseInt(str.slice(0, 1), 2) ? -1 : 1;
+        e = parseInt(str.slice(1, 1 + ebits), 2);
+        f = parseInt(str.slice(1 + ebits), 2);
 
         // Produce number
         if (e === (1 << ebits) - 1) {
@@ -4074,7 +4085,7 @@ define('common/utils/Enum',[], function() {
     }());
 
     defineProperties(String, {
-      fromCodePoint: function() {
+      fromCodePoint: function(_) { // length = 1
         var points = _slice.call(arguments, 0, arguments.length);
         var result = [];
         var next;
@@ -4252,12 +4263,14 @@ define('common/utils/Enum',[], function() {
     defineProperties(Array, {
       from: function(iterable) {
         var mapFn = arguments.length > 1 ? arguments[1] : undefined;
-        var thisArg = arguments.length > 2 ? arguments[2] : undefined;
 
         var list = ES.ToObject(iterable, 'bad iterable');
-        if (mapFn !== undefined && !ES.IsCallable(mapFn)) {
+        if (arguments.length > 1 && !ES.IsCallable(mapFn)) {
           throw new TypeError('Array.from: when provided, the second argument must be a function');
         }
+
+        var hasThisArg = arguments.length > 2;
+        var thisArg = hasThisArg ? arguments[2] : undefined;
 
         var usingIterator = ES.IsIterable(list);
         // does the spec really mean that Arrays should use ArrayIterator?
@@ -4280,7 +4293,7 @@ define('common/utils/Enum',[], function() {
             value = list[i];
           }
           if (mapFn) {
-            result[i] = thisArg ? mapFn.call(thisArg, value, i) : mapFn(value, i);
+            result[i] = hasThisArg ? mapFn.call(thisArg, value, i) : mapFn(value, i);
           } else {
             result[i] = value;
           }
@@ -4363,15 +4376,17 @@ define('common/utils/Enum',[], function() {
       },
 
       fill: function(value) {
-        var start = arguments[1], end = arguments[2]; // fill.length===1
+        var start = arguments.length > 1 ? arguments[1] : undefined;
+        var end = arguments.length > 2 ? arguments[2] : undefined;
         var O = ES.ToObject(this);
         var len = ES.ToLength(O.length);
-        start = ES.ToInteger(start===undefined ? 0 : start);
-        end = ES.ToInteger(end===undefined ? len : end);
+        start = ES.ToInteger(start === undefined ? 0 : start);
+        end = ES.ToInteger(end === undefined ? len : end);
 
         var relativeStart = start < 0 ? Math.max(len + start, 0) : Math.min(start, len);
+        var relativeEnd = end < 0 ? len + end : end;
 
-        for (var i = relativeStart; i < len && i < end; ++i) {
+        for (var i = relativeStart; i < len && i < relativeEnd; ++i) {
           O[i] = value;
         }
         return O;
@@ -4385,10 +4400,8 @@ define('common/utils/Enum',[], function() {
         }
         var thisArg = arguments[1];
         for (var i = 0, value; i < length; i++) {
-          if (i in list) {
-            value = list[i];
-            if (predicate.call(thisArg, value, i, list)) return value;
-          }
+          value = list[i];
+          if (predicate.call(thisArg, value, i, list)) { return value; }
         }
         return undefined;
       },
@@ -4401,9 +4414,7 @@ define('common/utils/Enum',[], function() {
         }
         var thisArg = arguments[1];
         for (var i = 0; i < length; i++) {
-          if (i in list) {
-            if (predicate.call(thisArg, list[i], i, list)) return i;
-          }
+          if (predicate.call(thisArg, list[i], i, list)) { return i; }
         }
         return -1;
       },
@@ -4441,9 +4452,7 @@ define('common/utils/Enum',[], function() {
       },
 
       isInteger: function(value) {
-        return typeof value === 'number' &&
-          !Number.isNaN(value) &&
-          Number.isFinite(value) &&
+        return Number.isFinite(value) &&
           ES.ToInteger(value) === value;
       },
 
@@ -4499,18 +4508,11 @@ define('common/utils/Enum',[], function() {
             throw new TypeError('target must be an object');
           }
           return Array.prototype.reduce.call(arguments, function(target, source) {
-            if (!ES.TypeIsObject(source)) {
-              throw new TypeError('source must be an object');
-            }
-            return Object.keys(source).reduce(function(target, key) {
+            return Object.keys(Object(source)).reduce(function(target, key) {
               target[key] = source[key];
               return target;
             }, target);
           });
-        },
-
-        getOwnPropertyKeys: function(subject) {
-          return Object.keys(subject);
         },
 
         is: function(a, b) {
@@ -4641,7 +4643,6 @@ define('common/utils/Enum',[], function() {
       clz32: function(value) {
         // See https://bugs.ecmascript.org/show_bug.cgi?id=2465
         value = Number(value);
-        if (Number.isNaN(value)) return NaN;
         var number = ES.ToUint32(value);
         if (number === 0) {
           return 32;
@@ -4750,6 +4751,8 @@ define('common/utils/Enum',[], function() {
 
       imul: function(x, y) {
         // taken from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/imul
+        x = ES.ToUint32(x);
+        y = ES.ToUint32(y);
         var ah  = (x >>> 16) & 0xffff;
         var al = x & 0xffff;
         var bh  = (y >>> 16) & 0xffff;
@@ -5209,7 +5212,7 @@ define('common/utils/Enum',[], function() {
           };
           addIterator(MapIterator.prototype);
 
-          function Map() {
+          function Map(iterable) {
             var map = this;
             map = emulateES6construct(map);
             if (!map._es6map) {
@@ -5227,7 +5230,6 @@ define('common/utils/Enum',[], function() {
             });
 
             // Optionally initialize map from iterable
-            var iterable = arguments[0];
             if (iterable !== undefined && iterable !== null) {
               var it = ES.GetIterator(iterable);
               var adder = map.set;
@@ -5395,7 +5397,7 @@ define('common/utils/Enum',[], function() {
           // Sets containing only string or numeric keys, we use an object
           // as backing storage and lazily create a full Map only when
           // required.
-          var SetShim = function Set() {
+          var SetShim = function Set(iterable) {
             var set = this;
             set = emulateES6construct(set);
             if (!set._es6set) {
@@ -5408,7 +5410,6 @@ define('common/utils/Enum',[], function() {
             });
 
             // Optionally initialize map from iterable
-            var iterable = arguments[0];
             if (iterable !== undefined && iterable !== null) {
               var it = ES.GetIterator(iterable);
               var adder = set.add;
@@ -5440,7 +5441,7 @@ define('common/utils/Enum',[], function() {
               Object.keys(set._storage).forEach(function(k) {
                 // fast check for leading '$'
                 if (k.charCodeAt(0) === 36) {
-                  k = k.substring(1);
+                  k = k.slice(1);
                 } else {
                   k = +k;
                 }
@@ -5925,6 +5926,7 @@ var prim_preventExtensions =        Object.preventExtensions,
     prim_getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor,
     prim_defineProperty =           Object.defineProperty,
     prim_keys =                     Object.keys,
+    prim_getOwnPropertyNames =      Object.getOwnPropertyNames,
     prim_isArray =                  Array.isArray,
     prim_concat =                   Array.prototype.concat,
     prim_isPrototypeOf =            Object.prototype.isPrototypeOf,
@@ -5933,7 +5935,11 @@ var prim_preventExtensions =        Object.preventExtensions,
 // these will point to the patched versions of the respective methods on
 // Object. They are used within this module as the "intrinsic" bindings
 // of these methods (i.e. the "original" bindings as defined in the spec)
-var Object_isFrozen, Object_isSealed, Object_isExtensible, Object_getPrototypeOf;
+var Object_isFrozen,
+    Object_isSealed,
+    Object_isExtensible,
+    Object_getPrototypeOf,
+    Object_getOwnPropertyNames;
 
 /**
  * A property 'name' is fixed if it is an own property of the target.
@@ -6014,11 +6020,9 @@ function isCompatibleDescriptor(extensible, current, desc) {
 }
 
 // ES6 7.3.11 SetIntegrityLevel
-//  - based on draft May 22, but using Object.getOwnPropertyNames rather than
-//    Reflect.ownKeys (as ownKeys does no invariant checking)
 // level is one of "sealed" or "frozen"
 function setIntegrityLevel(target, level) {
-  var ownProps = Object.getOwnPropertyNames(target);
+  var ownProps = Object_getOwnPropertyNames(target);
   var pendingException = undefined;
   if (level === "sealed") {
     var l = +ownProps.length;
@@ -6057,18 +6061,19 @@ function setIntegrityLevel(target, level) {
       }
     }
   }
+  if (pendingException !== undefined) {
+    throw pendingException;
+  }
   return Reflect.preventExtensions(target);
 }
 
 // ES6 7.3.12 TestIntegrityLevel
-//  - based on draft May 22, but using Object.getOwnPropertyNames rather than
-//    Reflect.ownKeys (as ownKeys does no invariant checking)
 // level is one of "sealed" or "frozen"
 function testIntegrityLevel(target, level) {
   var isExtensible = Object_isExtensible(target);
   if (isExtensible) return false;
   
-  var ownProps = Object.getOwnPropertyNames(target);
+  var ownProps = Object_getOwnPropertyNames(target);
   var pendingException = undefined;
   var configurable = false;
   var writable = false;
@@ -6399,6 +6404,15 @@ Validator.prototype = {
   },
 
   /**
+   * The getOwnPropertyNames trap was replaced by the ownKeys trap,
+   * which now also returns an array (of strings or symbols) and
+   * which performs the same rigorous invariant checks as getOwnPropertyNames
+   */
+  getOwnPropertyNames: function() {
+    throw new TypeError("getOwnPropertyNames trap is deprecated");
+  },
+
+  /**
    * Checks whether the trap result does not contain any new properties
    * if the proxy is non-extensible.
    *
@@ -6410,14 +6424,16 @@ Validator.prototype = {
    * Additionally, the trap result is normalized.
    * Instead of returning the trap result directly:
    *  - create and return a fresh Array,
-   *  - of which each element is coerced to String,
-   *  - which does not contain duplicates.
+   *  - of which each element is coerced to a String
+   *
+   * This trap is called a.o. by Reflect.ownKeys, Object.getOwnPropertyNames
+   * and Object.keys (the latter filters out only the enumerable own properties).
    */
-  getOwnPropertyNames: function() {
-    var trap = this.getTrap("getOwnPropertyNames");
+  ownKeys: function() {
+    var trap = this.getTrap("ownKeys");
     if (trap === undefined) {
       // default forwarding behavior
-      return Reflect.getOwnPropertyNames(this.target);
+      return Reflect.ownKeys(this.target);
     }
 
     var trapResult = trap.call(this.handler, this.target);
@@ -6429,13 +6445,9 @@ Validator.prototype = {
 
     for (var i = 0; i < numProps; i++) {
       var s = String(trapResult[i]);
-      if (propNames[s]) {
-        throw new TypeError("getOwnPropertyNames cannot list a "+
-                            "duplicate property '"+s+"'");
-      }
       if (!Object.isExtensible(this.target) && !isFixed(s, this.target)) {
         // non-extensible proxies don't tolerate new own property names
-        throw new TypeError("getOwnPropertyNames cannot list a new "+
+        throw new TypeError("ownKeys trap cannot list a new "+
                             "property '"+s+"' on a non-extensible object");
       }
 
@@ -6443,12 +6455,12 @@ Validator.prototype = {
       result[i] = s;
     }
 
-    var ownProps = Object.getOwnPropertyNames(this.target);
+    var ownProps = Object_getOwnPropertyNames(this.target);
     var target = this.target;
     ownProps.forEach(function (ownProp) {
       if (!propNames[ownProp]) {
         if (isSealed(ownProp, target)) {
-          throw new TypeError("getOwnPropertyNames trap failed to include "+
+          throw new TypeError("ownKeys trap failed to include "+
                               "non-configurable property '"+ownProp+"'");
         }
         if (!Object.isExtensible(target) &&
@@ -6458,8 +6470,8 @@ Validator.prototype = {
             // existent. Once a property has been reported as non-existent
             // on a non-extensible object, it should forever be reported as
             // non-existent
-            throw new TypeError("cannot report existing own property '"+ownProp+
-                                "' as non-existent on a non-extensible object");
+            throw new TypeError("ownKeys trap cannot report existing own property '"+
+                                ownProp+"' as non-existent on a non-extensible object");
         }
       }
     });
@@ -6855,32 +6867,6 @@ Validator.prototype = {
   */
   
   /**
-   * This trap is called a.o. by Object.keys, which filters out only
-   * the enumerable own properties.
-   *
-   * The trap should return an iterator. The proxy implementation only
-   * checks whether the return value is an object.
-   */
-  ownKeys: function() {
-    var trap = this.getTrap("ownKeys");
-    if (trap === undefined) {
-      // default forwarding behavior
-      return Reflect.ownKeys(this.target);
-    }
-
-    var trapResult = trap.call(this.handler, this.target);
-
-    if (trapResult === null ||
-        trapResult === undefined ||
-        typeof trapResult !== "object") {
-      throw new TypeError("ownKeys should return an iterator object, got " +
-                          trapResult);
-    }
-
-    return trapResult;
-  },
-
-  /**
    * New trap that reifies [[Call]].
    * If the target is a function, then a call to
    *   proxy(...args)
@@ -7022,20 +7008,27 @@ Object.defineProperty = function(subject, name, desc) {
 Object.keys = function(subject) {
   var vHandler = directProxies.get(subject);
   if (vHandler !== undefined) {
-    var ownKeysIterator = vHandler.ownKeys();
-    var nxt = ownKeysIterator.next();
+    var ownKeys = vHandler.ownKeys();
     var result = [];
-    while (!nxt.done) {
-      var k = String(nxt.value);
+    for (var i = 0; i < ownKeys.length; i++) {
+      var k = String(ownKeys[i]);
       var desc = Object.getOwnPropertyDescriptor(subject, k);
       if (desc !== undefined && desc.enumerable === true) {
         result.push(k);
       }
-      nxt = ownKeysIterator.next();
     }
     return result;
   } else {
     return prim_keys(subject);
+  }
+}
+
+Object.getOwnPropertyNames = Object_getOwnPropertyNames = function(subject) {
+  var vHandler = directProxies.get(subject);
+  if (vHandler !== undefined) {
+    return vHandler.ownKeys();
+  } else {
+    return prim_getOwnPropertyNames(subject);
   }
 }
 
@@ -7224,9 +7217,6 @@ Object.prototype.hasOwnProperty = function(name) {
 var Reflect = global.Reflect = {
   getOwnPropertyDescriptor: function(target, name) {
     return Object.getOwnPropertyDescriptor(target, name);
-  },
-  getOwnPropertyNames: function(target) {
-    return Object.getOwnPropertyNames(target);
   },
   defineProperty: function(target, name, desc) {
 
@@ -7468,11 +7458,6 @@ var Reflect = global.Reflect = {
     var fun = Reflect.get(target, name, receiver);
     return Function.prototype.apply.call(fun, receiver, args);
   },*/
-  /*enumerate: function(target) {
-    var result = [];
-    for (var name in target) { result.push(name); };
-    return result;
-  },*/
   enumerate: function(target) {
     var handler = directProxies.get(target);
     if (handler !== undefined) {
@@ -7493,20 +7478,7 @@ var Reflect = global.Reflect = {
   // imperfect ownKeys implementation: in ES6, should also include
   // symbol-keyed properties.
   ownKeys: function(target) {
-    var handler = directProxies.get(target);
-    if (handler !== undefined) {
-      return handler.ownKeys();
-    }
-
-    var result = Reflect.getOwnPropertyNames(target);
-    var l = +result.length;
-    var idx = 0;
-    return {
-      next: function() {
-        if (idx === l) { return { done: true } };
-        return { done: false, value: result[idx++] };
-      }
-    };
+    return Object_getOwnPropertyNames(target);
   },
   apply: function(target, receiver, args) {
     // target.apply(receiver, args)
@@ -7528,15 +7500,15 @@ var Reflect = global.Reflect = {
   }
 };
 
-var revokedHandler = Proxy.create({
-  get: function() { throw new TypeError("proxy is revoked"); }
-});
-
 // feature-test whether the Proxy global exists
 if (typeof Proxy !== "undefined") {
 
   var primCreate = Proxy.create,
       primCreateFunction = Proxy.createFunction;
+
+  var revokedHandler = primCreate({
+    get: function() { throw new TypeError("proxy is revoked"); }
+  });
 
   global.Proxy = function(target, handler) {
     // check that target is an Object
@@ -7607,7 +7579,7 @@ define("reflect", ["es6-shim"], (function (global) {
     };
 }(this)));
 
-define('resiliency/Retry',['../common/utils/Enum', 'reflect'], function($__0,$__2) {
+define('resiliency/Retry',['../utils/Enum', 'reflect'], function($__0,$__2) {
   
   if (!$__0 || !$__0.__esModule)
     $__0 = {default: $__0};
@@ -7898,7 +7870,7 @@ define('resiliency/Retry',['../common/utils/Enum', 'reflect'], function($__0,$__
   };
 });
 
-define('common/services/EventBus',['sockjs', 'stomp', '../utils/Enum', '../../resiliency/Retry'], function($__0,$__1,$__2,$__4) {
+define('reactive/EventBus',['sockjs', 'stomp', '../utils/Enum', '../resiliency/Retry'], function($__0,$__1,$__2,$__4) {
   
   if (!$__0 || !$__0.__esModule)
     $__0 = {default: $__0};
@@ -8104,7 +8076,7 @@ define('common/services/EventBus',['sockjs', 'stomp', '../utils/Enum', '../../re
   };
 });
 
-define('common/index',['./routes', './controllers/LoginController', './controllers/SettingsController', './services/AuthenticationService', './services/AuthorizationService', './services/UserService', './elements/hasPermission', './utils/AuthInterceptor', './services/EventBus', '../resiliency/Retry'], function($__0,$__2,$__4,$__6,$__8,$__10,$__12,$__14,$__16,$__18) {
+define('common/index',['./routes', './controllers/LoginController', './controllers/SettingsController', './services/AuthenticationService', './services/AuthorizationService', './services/UserService', './elements/hasPermission', './utils/AuthInterceptor', '../reactive/EventBus', '../resiliency/Retry', './utils/util'], function($__0,$__2,$__4,$__6,$__8,$__10,$__12,$__14,$__16,$__18,$__20) {
   
   if (!$__0 || !$__0.__esModule)
     $__0 = {default: $__0};
@@ -8126,6 +8098,8 @@ define('common/index',['./routes', './controllers/LoginController', './controlle
     $__16 = {default: $__16};
   if (!$__18 || !$__18.__esModule)
     $__18 = {default: $__18};
+  if (!$__20 || !$__20.__esModule)
+    $__20 = {default: $__20};
   var routes = $__0.default;
   var $__3 = $__2,
       LoginController = $__3.LoginController,
@@ -8145,6 +8119,7 @@ define('common/index',['./routes', './controllers/LoginController', './controlle
   var $__19 = $__18,
       BackoffStrategy = $__19.BackoffStrategy,
       Retry = $__19.Retry;
+  var isProxySupported = $__20.isProxySupported;
   var moduleName = 'spaApp.common';
   var commonModule = angular.module(moduleName, ['http-auth-interceptor-buffer']);
   commonModule.service('UserService', UserService);
@@ -8167,7 +8142,10 @@ define('common/index',['./routes', './controllers/LoginController', './controlle
   }));
   commonModule.run((function($rootScope, $eventBus) {
     
-    var eventBus = Retry.proxify($eventBus);
+    var eventBus = $eventBus;
+    if (isProxySupported()) {
+      eventBus = Retry.proxify($eventBus);
+    }
     if (typeof Object.observe === 'function') {
       Object.observe(eventBus, (function(changes) {
         $rootScope.$apply();
