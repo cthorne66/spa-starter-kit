@@ -7,9 +7,9 @@
         <title>Member Portal</title>
         <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
 
-        <link rel="stylesheet" href="styles/vendor.css">
+        <link rel="stylesheet" href="vendor.css">
 
-        <link rel="stylesheet" href="styles/main.css">
+        <link rel="stylesheet" href="index.css">
 
     </head>
     <body>
@@ -17,14 +17,14 @@
             <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
         <![endif]-->
 
-        <header id="header" ng-include src="'views/common/header.html'"></header>
+        <header id="header" ng-include src="'common/views/header.html'"></header>
         <div growl></div>
         <div id="spinner" ng-show="spinner" class="spinner center"></div>
 
-        <!--Page content should go in views/**/*.html-->
+        <!--Page content should go in <module>/views/**/*.html-->
         <ui-view class="slide-reveal" autoscroll="false">Loading ...</ui-view>
 
-        <footer id="footer" ng-include src="'views/common/footer.html'"></footer>
+        <footer id="footer" ng-include src="'common/views/footer.html'"></footer>
 
         <!-- Google Analytics: change UA-XXXXX-X to be your site's ID. -->
         <script>
@@ -36,6 +36,6 @@
             ga('create','UA-XXXXX-X');ga('send','pageview');
         </script>
 
-        <script src="scripts/bootstrap.js" data-main="scripts/bootstrap"></script>
+        <script src="bootstrap.js" data-main="bootstrap"></script>
     </body>
 </html>
