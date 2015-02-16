@@ -107,6 +107,7 @@ experiments/services/PrimeGenerator.js
 experiments/controllers/ExperimentController.js
 experiments/controllers/ElementsController.js
 experiments/controllers/GrowlTranslateDemoController.js
+experiments/controllers/IoTController.js
 experiments/elements/myElement/MyElement.js
 experiments/elements/customButton/CustomButton.js
 experiments/elements/myNews/MyNews.js
@@ -203,6 +204,7 @@ experiments/services/PrimeGenerator.js
 experiments/controllers/ExperimentController.js
 experiments/controllers/ElementsController.js
 experiments/controllers/GrowlTranslateDemoController.js
+experiments/controllers/IoTController.js
 common/utils/util.js
 experiments/elements/myElement/MyElement.js
 experiments/elements/customButton/CustomButton.js

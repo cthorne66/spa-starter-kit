@@ -48,6 +48,10 @@ define('experiments/routes',[], function() {
       onExit: function() {
         console.log('exit terminal');
       }
+    }).state('IoT', {
+      url: '/IoT',
+      templateUrl: 'experiments/views/IoT.html',
+      controller: 'IoTController as ic'
     }).state('todoMVC', {
       url: '/todo',
       templateUrl: 'experiments/views/todo.html',
@@ -13094,6 +13098,43 @@ define('experiments/controllers/GrowlTranslateDemoController',["diary"], functio
   };
 });
 
+define('experiments/controllers/IoTController',["http://api.pinocc.io/pinoccio.js"], function($__0) {
+  
+  if (!$__0 || !$__0.__esModule)
+    $__0 = {default: $__0};
+  var pinoccio = $__0.default;
+  var IoTController = function IoTController($scope, growl) {
+    var $__2 = this;
+    var api = pinoccioAPI('7c36027c5769eb9c659828958ed126bb');
+    var syncStream = api.sync({stale: 1});
+    syncStream.on('data', (function(data) {
+      console.log('data', data);
+      growl.info(("type: " + data.type + ", scout: " + data.scout + ", value: " + data.value), {
+        title: data.type,
+        ttl: 20000
+      });
+      if (data.type === 'temp' && data.troop === '1' && data.scout === '4') {
+        $scope.$apply((function() {
+          $__2.temp = data.value.c;
+        }));
+      }
+      if (data.type === 'announce' && data.troop === '1' && data.scout === '4') {
+        $scope.$apply((function() {
+          $__2.move = data.value.report[1];
+        }));
+      }
+    }));
+  };
+  ($traceurRuntime.createClass)(IoTController, {}, {});
+  var $__default = IoTController;
+  return {
+    get default() {
+      return $__default;
+    },
+    __esModule: true
+  };
+});
+
 define('common/utils/util',[], function() {
   
   
@@ -13334,7 +13375,7 @@ define('experiments/elements/highlighter',[], function() {
   };
 });
 
-define('experiments/index',["./routes", "./services/EmailService", "./controllers/TodoController", "./controllers/MessagingController", "./controllers/TerminalController", "./controllers/ExperimentController", "./controllers/ElementsController", "./controllers/GrowlTranslateDemoController", "./elements/myElement/MyElement", "./elements/customButton/CustomButton", "./elements/myNews/MyNews", "./elements/highlighter"], function($__0,$__2,$__4,$__6,$__8,$__10,$__12,$__14,$__16,$__18,$__20,$__22) {
+define('experiments/index',["./routes", "./services/EmailService", "./controllers/TodoController", "./controllers/MessagingController", "./controllers/TerminalController", "./controllers/ExperimentController", "./controllers/ElementsController", "./controllers/GrowlTranslateDemoController", "./controllers/IoTController", "./elements/myElement/MyElement", "./elements/customButton/CustomButton", "./elements/myNews/MyNews", "./elements/highlighter"], function($__0,$__2,$__4,$__6,$__8,$__10,$__12,$__14,$__16,$__18,$__20,$__22,$__24) {
   
   if (!$__0 || !$__0.__esModule)
     $__0 = {default: $__0};
@@ -13360,6 +13401,8 @@ define('experiments/index',["./routes", "./services/EmailService", "./controller
     $__20 = {default: $__20};
   if (!$__22 || !$__22.__esModule)
     $__22 = {default: $__22};
+  if (!$__24 || !$__24.__esModule)
+    $__24 = {default: $__24};
   var routes = $__0.default;
   var EmailService = $__2.default;
   var TodoController = $__4.default;
@@ -13368,10 +13411,11 @@ define('experiments/index',["./routes", "./services/EmailService", "./controller
   var ExperimentController = $__10.default;
   var ElementsController = $__12.default;
   var GrowlTranslateDemoController = $__14.default;
-  var MyElement = $__16.default;
-  var CustomButton = $__18.default;
-  var MyNews = $__20.default;
-  var highlighter = $__22.default;
+  var IoTController = $__16.default;
+  var MyElement = $__18.default;
+  var CustomButton = $__20.default;
+  var MyNews = $__22.default;
+  var highlighter = $__24.default;
   var moduleName = 'spaApp.experiments';
   var experimentsModule = angular.module(moduleName, []);
   experimentsModule.service('EmailService', EmailService);
@@ -13382,6 +13426,7 @@ define('experiments/index',["./routes", "./services/EmailService", "./controller
   experimentsModule.controller('ExperimentController', ExperimentController);
   experimentsModule.controller('ElementsController', ElementsController);
   experimentsModule.controller('GrowlTranslateDemoController', GrowlTranslateDemoController);
+  experimentsModule.controller('IoTController', IoTController);
   experimentsModule.config(routes);
   if ('registerElement' in document) {
     document.registerElement('my-element', MyElement);

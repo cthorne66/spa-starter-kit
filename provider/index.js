@@ -825,8 +825,6 @@ define('provider/index',["./routes", "./controllers/ProviderSearchController", "
   providerModule.config((function() {
     
     PROVIDER_SEARCH_CONFIG.BASE_API_URL = 'http://apsed2427:8080/api';
-    PROVIDER_SEARCH_CONFIG.USERNAME = 'm360_stg_user';
-    PROVIDER_SEARCH_CONFIG.PASSWORD = 'm360_stg_user';
   }));
   var $__default = moduleName;
   return {
