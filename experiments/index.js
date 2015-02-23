@@ -52,6 +52,10 @@ define('experiments/routes',[], function() {
       url: '/IoT',
       templateUrl: 'experiments/views/IoT.html',
       controller: 'IoTController as ic'
+    }).state('async', {
+      url: '/async',
+      templateUrl: 'experiments/views/async.html',
+      controller: 'AsyncController as ac'
     }).state('todoMVC', {
       url: '/todo',
       templateUrl: 'experiments/views/todo.html',
@@ -74,19 +78,37 @@ define('diary/diary',[], function() {
   };
   var $Diary = Diary;
   ($traceurRuntime.createClass)(Diary, {log: function(level, group, message) {
-      for (var $__1 = $Diary.reporters[$traceurRuntime.toProperty(Symbol.iterator)](),
-          $__2 = void 0; !($__2 = $__1.next()).done; ) {
-        var target = $__2.value;
-        {
-          var $__3 = target,
-              config = $__3.config,
-              reporter = $__3.reporter;
-          if ((config.level.indexOf('*') !== -1 || config.level.indexOf(level) !== -1) && (config.group.indexOf('*') !== -1 || config.group.indexOf(group) !== -1)) {
-            reporter.receive({
-              level: level,
-              group: group,
-              message: message
-            });
+      var $__4 = true;
+      var $__5 = false;
+      var $__6 = undefined;
+      try {
+        for (var $__2 = void 0,
+            $__1 = ($Diary.reporters)[$traceurRuntime.toProperty(Symbol.iterator)](); !($__4 = ($__2 = $__1.next()).done); $__4 = true) {
+          var target = $__2.value;
+          {
+            var $__8 = target,
+                config = $__8.config,
+                reporter = $__8.reporter;
+            if ((config.level.indexOf('*') !== -1 || config.level.indexOf(level) !== -1) && (config.group.indexOf('*') !== -1 || config.group.indexOf(group) !== -1)) {
+              reporter.receive({
+                level: level,
+                group: group,
+                message: message
+              });
+            }
+          }
+        }
+      } catch ($__7) {
+        $__5 = true;
+        $__6 = $__7;
+      } finally {
+        try {
+          if (!$__4 && $__1.return != null) {
+            $__1.return();
+          }
+        } finally {
+          if ($__5) {
+            throw $__6;
           }
         }
       }
@@ -115,14 +137,32 @@ define('diary/diary',[], function() {
     }
   });
   var reporters = [];
-  for (var $__1 = ['info', 'warn', 'fatal', 'error'][$traceurRuntime.toProperty(Symbol.iterator)](),
-      $__2 = void 0; !($__2 = $__1.next()).done; ) {
-    var level = $__2.value;
-    (function(level) {
-      Diary.prototype[level] = function(message) {
-        this.log(level, this.group, message);
-      };
-    })(level);
+  var $__4 = true;
+  var $__5 = false;
+  var $__6 = undefined;
+  try {
+    for (var $__2 = void 0,
+        $__1 = (['info', 'warn', 'fatal', 'error'])[$traceurRuntime.toProperty(Symbol.iterator)](); !($__4 = ($__2 = $__1.next()).done); $__4 = true) {
+      var level = $__2.value;
+      (function(level) {
+        Diary.prototype[level] = function(message) {
+          this.log(level, this.group, message);
+        };
+      })(level);
+    }
+  } catch ($__7) {
+    $__5 = true;
+    $__6 = $__7;
+  } finally {
+    try {
+      if (!$__4 && $__1.return != null) {
+        $__1.return();
+      }
+    } finally {
+      if ($__5) {
+        throw $__6;
+      }
+    }
   }
   return {
     get Diary() {
@@ -206,12 +246,6 @@ define('di/util',[], function() {
   function isUpperCase(char) {
     return char.toUpperCase() === char;
   }
-  function isClass(clsOrFunction) {
-    if (clsOrFunction.name) {
-      return isUpperCase(clsOrFunction.name.charAt(0));
-    }
-    return Object.keys(clsOrFunction.prototype).length > 0;
-  }
   function isFunction(value) {
     return typeof value === 'function';
   }
@@ -230,13 +264,16 @@ define('di/util',[], function() {
     }
     return token.toString();
   }
+  var ownKeys = (Reflect && Reflect.ownKeys ? Reflect.ownKeys : function ownKeys(O) {
+    var keys = Object.getOwnPropertyNames(O);
+    if (Object.getOwnPropertySymbols)
+      return keys.concat(Object.getOwnPropertySymbols(O));
+    return keys;
+  });
   ;
   return {
     get isUpperCase() {
       return isUpperCase;
-    },
-    get isClass() {
-      return isClass;
     },
     get isFunction() {
       return isFunction;
@@ -246,6 +283,9 @@ define('di/util',[], function() {
     },
     get toString() {
       return toString;
+    },
+    get ownKeys() {
+      return ownKeys;
     },
     __esModule: true
   };
@@ -262,8 +302,8 @@ define('di/annotations',["./util"], function($__0) {
   ($traceurRuntime.createClass)(TransientScope, {}, {});
   var Inject = function Inject() {
     for (var tokens = [],
-        $__7 = 0; $__7 < arguments.length; $__7++)
-      tokens[$__7] = arguments[$__7];
+        $__17 = 0; $__17 < arguments.length; $__17++)
+      tokens[$__17] = arguments[$__17];
     this.tokens = tokens;
     this.isPromise = false;
     this.isLazy = false;
@@ -271,8 +311,8 @@ define('di/annotations',["./util"], function($__0) {
   ($traceurRuntime.createClass)(Inject, {}, {});
   var InjectPromise = function InjectPromise() {
     for (var tokens = [],
-        $__8 = 0; $__8 < arguments.length; $__8++)
-      tokens[$__8] = arguments[$__8];
+        $__18 = 0; $__18 < arguments.length; $__18++)
+      tokens[$__18] = arguments[$__18];
     this.tokens = tokens;
     this.isPromise = true;
     this.isLazy = false;
@@ -280,8 +320,8 @@ define('di/annotations',["./util"], function($__0) {
   ($traceurRuntime.createClass)(InjectPromise, {}, {}, Inject);
   var InjectLazy = function InjectLazy() {
     for (var tokens = [],
-        $__9 = 0; $__9 < arguments.length; $__9++)
-      tokens[$__9] = arguments[$__9];
+        $__19 = 0; $__19 < arguments.length; $__19++)
+      tokens[$__19] = arguments[$__19];
     this.tokens = tokens;
     this.isPromise = false;
     this.isLazy = true;
@@ -297,6 +337,10 @@ define('di/annotations',["./util"], function($__0) {
     this.isPromise = true;
   };
   ($traceurRuntime.createClass)(ProvidePromise, {}, {}, Provide);
+  var ClassProvider = function ClassProvider() {};
+  ($traceurRuntime.createClass)(ClassProvider, {}, {});
+  var FactoryProvider = function FactoryProvider() {};
+  ($traceurRuntime.createClass)(FactoryProvider, {}, {});
   function annotate(fn, annotation) {
     fn.annotations = fn.annotations || [];
     fn.annotations.push(annotation);
@@ -305,12 +349,30 @@ define('di/annotations',["./util"], function($__0) {
     if (!fn.annotations || fn.annotations.length === 0) {
       return false;
     }
-    for (var $__3 = fn.annotations[$traceurRuntime.toProperty(Symbol.iterator)](),
-        $__4 = void 0; !($__4 = $__3.next()).done; ) {
-      var annotation = $__4.value;
-      {
-        if (annotation instanceof annotationClass) {
-          return true;
+    var $__6 = true;
+    var $__7 = false;
+    var $__8 = undefined;
+    try {
+      for (var $__4 = void 0,
+          $__3 = (fn.annotations)[$traceurRuntime.toProperty(Symbol.iterator)](); !($__6 = ($__4 = $__3.next()).done); $__6 = true) {
+        var annotation = $__4.value;
+        {
+          if (annotation instanceof annotationClass) {
+            return true;
+          }
+        }
+      }
+    } catch ($__9) {
+      $__7 = true;
+      $__8 = $__9;
+    } finally {
+      try {
+        if (!$__6 && $__3.return != null) {
+          $__3.return();
+        }
+      } finally {
+        if ($__7) {
+          throw $__8;
         }
       }
     }
@@ -325,44 +387,80 @@ define('di/annotations',["./util"], function($__0) {
       params: []
     };
     if (fn.annotations && fn.annotations.length) {
-      for (var $__3 = fn.annotations[$traceurRuntime.toProperty(Symbol.iterator)](),
-          $__4 = void 0; !($__4 = $__3.next()).done; ) {
-        var annotation = $__4.value;
-        {
-          if (annotation instanceof Inject) {
-            annotation.tokens.forEach((function(token) {
-              collectedAnnotations.params.push({
-                token: token,
-                isPromise: annotation.isPromise,
-                isLazy: annotation.isLazy
-              });
-            }));
+      var $__6 = true;
+      var $__7 = false;
+      var $__8 = undefined;
+      try {
+        for (var $__4 = void 0,
+            $__3 = (fn.annotations)[$traceurRuntime.toProperty(Symbol.iterator)](); !($__6 = ($__4 = $__3.next()).done); $__6 = true) {
+          var annotation = $__4.value;
+          {
+            if (annotation instanceof Inject) {
+              annotation.tokens.forEach((function(token) {
+                collectedAnnotations.params.push({
+                  token: token,
+                  isPromise: annotation.isPromise,
+                  isLazy: annotation.isLazy
+                });
+              }));
+            }
+            if (annotation instanceof Provide) {
+              collectedAnnotations.provide.token = annotation.token;
+              collectedAnnotations.provide.isPromise = annotation.isPromise;
+            }
           }
-          if (annotation instanceof Provide) {
-            collectedAnnotations.provide.token = annotation.token;
-            collectedAnnotations.provide.isPromise = annotation.isPromise;
+        }
+      } catch ($__9) {
+        $__7 = true;
+        $__8 = $__9;
+      } finally {
+        try {
+          if (!$__6 && $__3.return != null) {
+            $__3.return();
+          }
+        } finally {
+          if ($__7) {
+            throw $__8;
           }
         }
       }
     }
     if (fn.parameters) {
       fn.parameters.forEach((function(param, idx) {
-        for (var $__5 = param[$traceurRuntime.toProperty(Symbol.iterator)](),
-            $__6 = void 0; !($__6 = $__5.next()).done; ) {
-          var paramAnnotation = $__6.value;
-          {
-            if (isFunction(paramAnnotation) && !collectedAnnotations.params[idx]) {
-              collectedAnnotations.params[idx] = {
-                token: paramAnnotation,
-                isPromise: false,
-                isLazy: false
-              };
-            } else if (paramAnnotation instanceof Inject) {
-              collectedAnnotations.params[idx] = {
-                token: paramAnnotation.tokens[0],
-                isPromise: paramAnnotation.isPromise,
-                isLazy: paramAnnotation.isLazy
-              };
+        var $__13 = true;
+        var $__14 = false;
+        var $__15 = undefined;
+        try {
+          for (var $__11 = void 0,
+              $__10 = (param)[$traceurRuntime.toProperty(Symbol.iterator)](); !($__13 = ($__11 = $__10.next()).done); $__13 = true) {
+            var paramAnnotation = $__11.value;
+            {
+              if (isFunction(paramAnnotation) && !collectedAnnotations.params[idx]) {
+                collectedAnnotations.params[idx] = {
+                  token: paramAnnotation,
+                  isPromise: false,
+                  isLazy: false
+                };
+              } else if (paramAnnotation instanceof Inject) {
+                collectedAnnotations.params[idx] = {
+                  token: paramAnnotation.tokens[0],
+                  isPromise: paramAnnotation.isPromise,
+                  isLazy: paramAnnotation.isLazy
+                };
+              }
+            }
+          }
+        } catch ($__16) {
+          $__14 = true;
+          $__15 = $__16;
+        } finally {
+          try {
+            if (!$__13 && $__10.return != null) {
+              $__10.return();
+            }
+          } finally {
+            if ($__14) {
+              throw $__15;
             }
           }
         }
@@ -401,6 +499,12 @@ define('di/annotations',["./util"], function($__0) {
     },
     get ProvidePromise() {
       return ProvidePromise;
+    },
+    get ClassProvider() {
+      return ClassProvider;
+    },
+    get FactoryProvider() {
+      return FactoryProvider;
     },
     __esModule: true
   };
@@ -490,13 +594,28 @@ define('di/providers',["./annotations", "./util"], function($__0,$__2) {
   if (!$__2 || !$__2.__esModule)
     $__2 = {default: $__2};
   var $__1 = $__0,
+      ClassProviderAnnotation = $__1.ClassProvider,
+      FactoryProviderAnnotation = $__1.FactoryProvider,
       SuperConstructorAnnotation = $__1.SuperConstructor,
-      readAnnotations = $__1.readAnnotations;
+      readAnnotations = $__1.readAnnotations,
+      hasAnnotation = $__1.hasAnnotation;
   var $__3 = $__2,
-      isClass = $__3.isClass,
       isFunction = $__3.isFunction,
       isObject = $__3.isObject,
-      toString = $__3.toString;
+      toString = $__3.toString,
+      isUpperCase = $__3.isUpperCase,
+      ownKeys = $__3.ownKeys;
+  function isClass(clsOrFunction) {
+    if (hasAnnotation(clsOrFunction, ClassProviderAnnotation)) {
+      return true;
+    } else if (hasAnnotation(clsOrFunction, FactoryProviderAnnotation)) {
+      return false;
+    } else if (clsOrFunction.name) {
+      return isUpperCase(clsOrFunction.name.charAt(0));
+    } else {
+      return ownKeys(clsOrFunction.prototype).length > 0;
+    }
+  }
   var EmptyFunction = Object.getPrototypeOf(Function);
   var ClassProvider = function ClassProvider(clazz, params, isPromise) {
     this.provider = clazz;
@@ -510,21 +629,39 @@ define('di/providers',["./annotations", "./util"], function($__0,$__2) {
     _flattenParams: function(constructor, params) {
       var SuperConstructor;
       var constructorInfo;
-      for (var $__5 = params[$traceurRuntime.toProperty(Symbol.iterator)](),
-          $__6 = void 0; !($__6 = $__5.next()).done; ) {
-        var param = $__6.value;
-        {
-          if (param.token === SuperConstructorAnnotation) {
-            SuperConstructor = Object.getPrototypeOf(constructor);
-            if (SuperConstructor === EmptyFunction) {
-              throw new Error((toString(constructor) + " does not have a parent constructor. Only classes with a parent can ask for SuperConstructor!"));
+      var $__8 = true;
+      var $__9 = false;
+      var $__10 = undefined;
+      try {
+        for (var $__6 = void 0,
+            $__5 = (params)[$traceurRuntime.toProperty(Symbol.iterator)](); !($__8 = ($__6 = $__5.next()).done); $__8 = true) {
+          var param = $__6.value;
+          {
+            if (param.token === SuperConstructorAnnotation) {
+              SuperConstructor = Object.getPrototypeOf(constructor);
+              if (SuperConstructor === EmptyFunction) {
+                throw new Error((toString(constructor) + " does not have a parent constructor. Only classes with a parent can ask for SuperConstructor!"));
+              }
+              constructorInfo = [SuperConstructor, this.params.length];
+              this._constructors.push(constructorInfo);
+              this._flattenParams(SuperConstructor, readAnnotations(SuperConstructor).params);
+              constructorInfo.push(this.params.length - 1);
+            } else {
+              this.params.push(param);
             }
-            constructorInfo = [SuperConstructor, this.params.length];
-            this._constructors.push(constructorInfo);
-            this._flattenParams(SuperConstructor, readAnnotations(SuperConstructor).params);
-            constructorInfo.push(this.params.length - 1);
-          } else {
-            this.params.push(param);
+          }
+        }
+      } catch ($__11) {
+        $__9 = true;
+        $__10 = $__11;
+      } finally {
+        try {
+          if (!$__8 && $__5.return != null) {
+            $__5.return();
+          }
+        } finally {
+          if ($__9) {
+            throw $__10;
           }
         }
       }
@@ -556,12 +693,30 @@ define('di/providers',["./annotations", "./util"], function($__0,$__2) {
     this.provider = factoryFunction;
     this.params = params;
     this.isPromise = isPromise;
-    for (var $__5 = params[$traceurRuntime.toProperty(Symbol.iterator)](),
-        $__6 = void 0; !($__6 = $__5.next()).done; ) {
-      var param = $__6.value;
-      {
-        if (param.token === SuperConstructorAnnotation) {
-          throw new Error((toString(factoryFunction) + " is not a class. Only classes with a parent can ask for SuperConstructor!"));
+    var $__8 = true;
+    var $__9 = false;
+    var $__10 = undefined;
+    try {
+      for (var $__6 = void 0,
+          $__5 = (params)[$traceurRuntime.toProperty(Symbol.iterator)](); !($__8 = ($__6 = $__5.next()).done); $__8 = true) {
+        var param = $__6.value;
+        {
+          if (param.token === SuperConstructorAnnotation) {
+            throw new Error((toString(factoryFunction) + " is not a class. Only classes with a parent can ask for SuperConstructor!"));
+          }
+        }
+      }
+    } catch ($__11) {
+      $__9 = true;
+      $__10 = $__11;
+    } finally {
+      try {
+        if (!$__8 && $__5.return != null) {
+          $__5.return();
+        }
+      } finally {
+        if ($__9) {
+          throw $__10;
         }
       }
     }
@@ -638,15 +793,33 @@ define('di/injector',["./annotations", "./util", "./profiler", "./providers"], f
       }
     },
     _loadModules: function(modules) {
-      for (var $__10 = modules[$traceurRuntime.toProperty(Symbol.iterator)](),
-          $__11 = void 0; !($__11 = $__10.next()).done; ) {
-        var module = $__11.value;
-        {
-          if (isFunction(module)) {
-            this._loadFnOrClass(module);
-            continue;
+      var $__13 = true;
+      var $__14 = false;
+      var $__15 = undefined;
+      try {
+        for (var $__11 = void 0,
+            $__10 = (modules)[$traceurRuntime.toProperty(Symbol.iterator)](); !($__13 = ($__11 = $__10.next()).done); $__13 = true) {
+          var module = $__11.value;
+          {
+            if (isFunction(module)) {
+              this._loadFnOrClass(module);
+              continue;
+            }
+            throw new Error('Invalid module!');
           }
-          throw new Error('Invalid module!');
+        }
+      } catch ($__16) {
+        $__14 = true;
+        $__15 = $__16;
+      } finally {
+        try {
+          if (!$__13 && $__10.return != null) {
+            $__10.return();
+          }
+        } finally {
+          if ($__14) {
+            throw $__15;
+          }
         }
       }
     },
@@ -670,13 +843,31 @@ define('di/injector',["./annotations", "./util", "./profiler", "./providers"], f
         this._providers.set(token, provider);
         return this.get(token, resolving, wantPromise, wantLazy);
       }
-      for (var $__10 = this._scopes[$traceurRuntime.toProperty(Symbol.iterator)](),
-          $__11 = void 0; !($__11 = $__10.next()).done; ) {
-        var ScopeClass = $__11.value;
-        {
-          if (hasAnnotation(provider.provider, ScopeClass)) {
-            this._providers.set(token, provider);
-            return this.get(token, resolving, wantPromise, wantLazy);
+      var $__13 = true;
+      var $__14 = false;
+      var $__15 = undefined;
+      try {
+        for (var $__11 = void 0,
+            $__10 = (this._scopes)[$traceurRuntime.toProperty(Symbol.iterator)](); !($__13 = ($__11 = $__10.next()).done); $__13 = true) {
+          var ScopeClass = $__11.value;
+          {
+            if (hasAnnotation(provider.provider, ScopeClass)) {
+              this._providers.set(token, provider);
+              return this.get(token, resolving, wantPromise, wantLazy);
+            }
+          }
+        }
+      } catch ($__16) {
+        $__14 = true;
+        $__15 = $__16;
+      } finally {
+        try {
+          if (!$__13 && $__10.return != null) {
+            $__10.return();
+          }
+        } finally {
+          if ($__14) {
+            throw $__15;
           }
         }
       }
@@ -806,11 +997,29 @@ define('di/injector',["./annotations", "./util", "./profiler", "./providers"], f
       var forceNewInstancesOf = arguments[1] !== (void 0) ? arguments[1] : [];
       var forcedProviders = new Map();
       forceNewInstancesOf.push(TransientScopeAnnotation);
-      for (var $__10 = forceNewInstancesOf[$traceurRuntime.toProperty(Symbol.iterator)](),
-          $__11 = void 0; !($__11 = $__10.next()).done; ) {
-        var annotation = $__11.value;
-        {
-          this._collectProvidersWithAnnotation(annotation, forcedProviders);
+      var $__13 = true;
+      var $__14 = false;
+      var $__15 = undefined;
+      try {
+        for (var $__11 = void 0,
+            $__10 = (forceNewInstancesOf)[$traceurRuntime.toProperty(Symbol.iterator)](); !($__13 = ($__11 = $__10.next()).done); $__13 = true) {
+          var annotation = $__11.value;
+          {
+            this._collectProvidersWithAnnotation(annotation, forcedProviders);
+          }
+        }
+      } catch ($__16) {
+        $__14 = true;
+        $__15 = $__16;
+      } finally {
+        try {
+          if (!$__13 && $__10.return != null) {
+            $__10.return();
+          }
+        } finally {
+          if ($__14) {
+            throw $__15;
+          }
         }
       }
       return new $Injector(modules, this, forcedProviders, forceNewInstancesOf);
@@ -861,6 +1070,12 @@ define('di/index',["./injector", "./annotations"], function($__0,$__1) {
     get TransientScope() {
       return $__annotations__.TransientScope;
     },
+    get ClassProvider() {
+      return $__annotations__.ClassProvider;
+    },
+    get FactoryProvider() {
+      return $__annotations__.FactoryProvider;
+    },
     __esModule: true
   };
 });
@@ -902,19 +1117,37 @@ define('common/utils/Generators',["di"], function($__0) {
       TransientScope = $__1.TransientScope;
   var Generators = function Generators() {};
   ($traceurRuntime.createClass)(Generators, {}, {
-    entries: $traceurRuntime.initGeneratorFunction(function $__5(obj) {
-      var $__3,
+    entries: $traceurRuntime.initGeneratorFunction(function $__10(obj) {
+      var $__6,
+          $__7,
+          $__8,
           $__4,
-          key;
+          $__3,
+          key,
+          $__9;
       return $traceurRuntime.createGeneratorInstance(function($ctx) {
         while (true)
           switch ($ctx.state) {
             case 0:
-              $__3 = Object.keys(obj)[$traceurRuntime.toProperty(Symbol.iterator)](), $__4 = void 0;
-              $ctx.state = 4;
+              $__6 = true;
+              $__7 = false;
+              $__8 = undefined;
+              $ctx.state = 24;
+              break;
+            case 24:
+              $ctx.pushTry(10, 11);
+              $ctx.state = 13;
+              break;
+            case 13:
+              $__4 = void 0, $__3 = (Object.keys(obj))[$traceurRuntime.toProperty(Symbol.iterator)]();
+              $ctx.state = 9;
+              break;
+            case 9:
+              $ctx.state = (!($__6 = ($__4 = $__3.next()).done)) ? 5 : 7;
               break;
             case 4:
-              $ctx.state = (!($__4 = $__3.next()).done) ? 5 : -2;
+              $__6 = true;
+              $ctx.state = 9;
               break;
             case 5:
               key = $__4.value;
@@ -927,24 +1160,78 @@ define('common/utils/Generators',["di"], function($__0) {
               $ctx.maybeThrow();
               $ctx.state = 4;
               break;
+            case 7:
+              $ctx.popTry();
+              $ctx.state = 11;
+              $ctx.finallyFallThrough = -2;
+              break;
+            case 10:
+              $ctx.popTry();
+              $ctx.maybeUncatchable();
+              $__9 = $ctx.storedException;
+              $ctx.state = 16;
+              break;
+            case 16:
+              $__7 = true;
+              $__8 = $__9;
+              $ctx.state = 11;
+              $ctx.finallyFallThrough = -2;
+              break;
+            case 11:
+              $ctx.popTry();
+              $ctx.state = 22;
+              break;
+            case 22:
+              try {
+                if (!$__6 && $__3.return != null) {
+                  $__3.return();
+                }
+              } finally {
+                if ($__7) {
+                  throw $__8;
+                }
+              }
+              $ctx.state = 20;
+              break;
+            case 20:
+              $ctx.state = $ctx.finallyFallThrough;
+              break;
             default:
               return $ctx.end();
           }
-      }, $__5, this);
+      }, $__10, this);
     }),
-    keys: $traceurRuntime.initGeneratorFunction(function $__6(obj) {
-      var $__3,
+    keys: $traceurRuntime.initGeneratorFunction(function $__11(obj) {
+      var $__6,
+          $__7,
+          $__8,
           $__4,
-          key;
+          $__3,
+          key,
+          $__9;
       return $traceurRuntime.createGeneratorInstance(function($ctx) {
         while (true)
           switch ($ctx.state) {
             case 0:
-              $__3 = Object.keys(obj)[$traceurRuntime.toProperty(Symbol.iterator)](), $__4 = void 0;
-              $ctx.state = 4;
+              $__6 = true;
+              $__7 = false;
+              $__8 = undefined;
+              $ctx.state = 24;
+              break;
+            case 24:
+              $ctx.pushTry(10, 11);
+              $ctx.state = 13;
+              break;
+            case 13:
+              $__4 = void 0, $__3 = (Object.keys(obj))[$traceurRuntime.toProperty(Symbol.iterator)]();
+              $ctx.state = 9;
+              break;
+            case 9:
+              $ctx.state = (!($__6 = ($__4 = $__3.next()).done)) ? 5 : 7;
               break;
             case 4:
-              $ctx.state = (!($__4 = $__3.next()).done) ? 5 : -2;
+              $__6 = true;
+              $ctx.state = 9;
               break;
             case 5:
               key = $__4.value;
@@ -957,12 +1244,48 @@ define('common/utils/Generators',["di"], function($__0) {
               $ctx.maybeThrow();
               $ctx.state = 4;
               break;
+            case 7:
+              $ctx.popTry();
+              $ctx.state = 11;
+              $ctx.finallyFallThrough = -2;
+              break;
+            case 10:
+              $ctx.popTry();
+              $ctx.maybeUncatchable();
+              $__9 = $ctx.storedException;
+              $ctx.state = 16;
+              break;
+            case 16:
+              $__7 = true;
+              $__8 = $__9;
+              $ctx.state = 11;
+              $ctx.finallyFallThrough = -2;
+              break;
+            case 11:
+              $ctx.popTry();
+              $ctx.state = 22;
+              break;
+            case 22:
+              try {
+                if (!$__6 && $__3.return != null) {
+                  $__3.return();
+                }
+              } finally {
+                if ($__7) {
+                  throw $__8;
+                }
+              }
+              $ctx.state = 20;
+              break;
+            case 20:
+              $ctx.state = $ctx.finallyFallThrough;
+              break;
             default:
               return $ctx.end();
           }
-      }, $__6, this);
+      }, $__11, this);
     }),
-    take: $traceurRuntime.initGeneratorFunction(function $__7(iterator, n) {
+    take: $traceurRuntime.initGeneratorFunction(function $__12(iterator, n) {
       return $traceurRuntime.createGeneratorInstance(function($ctx) {
         while (true)
           switch ($ctx.state) {
@@ -983,21 +1306,39 @@ define('common/utils/Generators',["di"], function($__0) {
             default:
               return $ctx.end();
           }
-      }, $__7, this);
+      }, $__12, this);
     }),
-    values: $traceurRuntime.initGeneratorFunction(function $__8(obj) {
-      var $__3,
+    values: $traceurRuntime.initGeneratorFunction(function $__13(obj) {
+      var $__6,
+          $__7,
+          $__8,
           $__4,
-          key;
+          $__3,
+          key,
+          $__9;
       return $traceurRuntime.createGeneratorInstance(function($ctx) {
         while (true)
           switch ($ctx.state) {
             case 0:
-              $__3 = Object.keys(obj)[$traceurRuntime.toProperty(Symbol.iterator)](), $__4 = void 0;
-              $ctx.state = 4;
+              $__6 = true;
+              $__7 = false;
+              $__8 = undefined;
+              $ctx.state = 24;
+              break;
+            case 24:
+              $ctx.pushTry(10, 11);
+              $ctx.state = 13;
+              break;
+            case 13:
+              $__4 = void 0, $__3 = (Object.keys(obj))[$traceurRuntime.toProperty(Symbol.iterator)]();
+              $ctx.state = 9;
+              break;
+            case 9:
+              $ctx.state = (!($__6 = ($__4 = $__3.next()).done)) ? 5 : 7;
               break;
             case 4:
-              $ctx.state = (!($__4 = $__3.next()).done) ? 5 : -2;
+              $__6 = true;
+              $ctx.state = 9;
               break;
             case 5:
               key = $__4.value;
@@ -1010,12 +1351,48 @@ define('common/utils/Generators',["di"], function($__0) {
               $ctx.maybeThrow();
               $ctx.state = 4;
               break;
+            case 7:
+              $ctx.popTry();
+              $ctx.state = 11;
+              $ctx.finallyFallThrough = -2;
+              break;
+            case 10:
+              $ctx.popTry();
+              $ctx.maybeUncatchable();
+              $__9 = $ctx.storedException;
+              $ctx.state = 16;
+              break;
+            case 16:
+              $__7 = true;
+              $__8 = $__9;
+              $ctx.state = 11;
+              $ctx.finallyFallThrough = -2;
+              break;
+            case 11:
+              $ctx.popTry();
+              $ctx.state = 22;
+              break;
+            case 22:
+              try {
+                if (!$__6 && $__3.return != null) {
+                  $__3.return();
+                }
+              } finally {
+                if ($__7) {
+                  throw $__8;
+                }
+              }
+              $ctx.state = 20;
+              break;
+            case 20:
+              $ctx.state = $ctx.finallyFallThrough;
+              break;
             default:
               return $ctx.end();
           }
-      }, $__8, this);
+      }, $__13, this);
     }),
-    keyGenerator: $traceurRuntime.initGeneratorFunction(function $__9() {
+    keyGenerator: $traceurRuntime.initGeneratorFunction(function $__14() {
       var i,
           reset;
       return $traceurRuntime.createGeneratorInstance(function($ctx) {
@@ -1048,7 +1425,7 @@ define('common/utils/Generators',["di"], function($__0) {
             default:
               return $ctx.end();
           }
-      }, $__9, this);
+      }, $__14, this);
     })
   });
   Object.defineProperty(Generators.keyGenerator, "annotations", {get: function() {
@@ -1097,12 +1474,30 @@ define('experiments/models/TodoList',["./TodoItem", "../../common/utils/Generato
       return this.todos;
     },
     archiveCompleted: function() {
-      for (var $__9 = Generators.values(this.todos)[$traceurRuntime.toProperty(Symbol.iterator)](),
-          $__10 = void 0; !($__10 = $__9.next()).done; ) {
-        var todo = $__10.value;
-        {
-          if (todo.done) {
-            console.log('removing...', todo);
+      var $__12 = true;
+      var $__13 = false;
+      var $__14 = undefined;
+      try {
+        for (var $__10 = void 0,
+            $__9 = (Generators.values(this.todos))[$traceurRuntime.toProperty(Symbol.iterator)](); !($__12 = ($__10 = $__9.next()).done); $__12 = true) {
+          var todo = $__10.value;
+          {
+            if (todo.done) {
+              console.log('removing...', todo);
+            }
+          }
+        }
+      } catch ($__15) {
+        $__13 = true;
+        $__14 = $__15;
+      } finally {
+        try {
+          if (!$__12 && $__9.return != null) {
+            $__9.return();
+          }
+        } finally {
+          if ($__13) {
+            throw $__14;
           }
         }
       }
@@ -1113,12 +1508,30 @@ define('experiments/models/TodoList',["./TodoItem", "../../common/utils/Generato
     },
     getUncompletedCount: function() {
       var count = 0;
-      for (var $__9 = Generators.values(this.todos)[$traceurRuntime.toProperty(Symbol.iterator)](),
-          $__10 = void 0; !($__10 = $__9.next()).done; ) {
-        var todo = $__10.value;
-        {
-          if (!todo.done) {
-            count++;
+      var $__12 = true;
+      var $__13 = false;
+      var $__14 = undefined;
+      try {
+        for (var $__10 = void 0,
+            $__9 = (Generators.values(this.todos))[$traceurRuntime.toProperty(Symbol.iterator)](); !($__12 = ($__10 = $__9.next()).done); $__12 = true) {
+          var todo = $__10.value;
+          {
+            if (!todo.done) {
+              count++;
+            }
+          }
+        }
+      } catch ($__15) {
+        $__13 = true;
+        $__14 = $__15;
+      } finally {
+        try {
+          if (!$__12 && $__9.return != null) {
+            $__9.return();
+          }
+        } finally {
+          if ($__13) {
+            throw $__14;
           }
         }
       }
@@ -1130,15 +1543,33 @@ define('experiments/models/TodoList',["./TodoItem", "../../common/utils/Generato
       }));
     },
     remaining: function() {
-      var $__11;
-      return ($__11 = this.todos.values()).without.apply($__11, $traceurRuntime.spread(this.completed()));
+      var $__16;
+      return ($__16 = this.todos.values()).without.apply($__16, $traceurRuntime.spread(this.completed()));
     },
     clearAll: function() {
-      for (var $__9 = Generators.keys(this.todos)[$traceurRuntime.toProperty(Symbol.iterator)](),
-          $__10 = void 0; !($__10 = $__9.next()).done; ) {
-        var todo = $__10.value;
-        {
-          this.remove(todo);
+      var $__12 = true;
+      var $__13 = false;
+      var $__14 = undefined;
+      try {
+        for (var $__10 = void 0,
+            $__9 = (Generators.keys(this.todos))[$traceurRuntime.toProperty(Symbol.iterator)](); !($__12 = ($__10 = $__9.next()).done); $__12 = true) {
+          var todo = $__10.value;
+          {
+            this.remove(todo);
+          }
+        }
+      } catch ($__15) {
+        $__13 = true;
+        $__14 = $__15;
+      } finally {
+        try {
+          if (!$__12 && $__9.return != null) {
+            $__9.return();
+          }
+        } finally {
+          if ($__13) {
+            throw $__14;
+          }
         }
       }
       this.logger.info(("Reseting keyGen to : " + this.keyGen.next(true).value));
@@ -1167,19 +1598,37 @@ define('common/utils/generators',["di"], function($__0) {
       TransientScope = $__1.TransientScope;
   var Generators = function Generators() {};
   ($traceurRuntime.createClass)(Generators, {}, {
-    entries: $traceurRuntime.initGeneratorFunction(function $__5(obj) {
-      var $__3,
+    entries: $traceurRuntime.initGeneratorFunction(function $__10(obj) {
+      var $__6,
+          $__7,
+          $__8,
           $__4,
-          key;
+          $__3,
+          key,
+          $__9;
       return $traceurRuntime.createGeneratorInstance(function($ctx) {
         while (true)
           switch ($ctx.state) {
             case 0:
-              $__3 = Object.keys(obj)[$traceurRuntime.toProperty(Symbol.iterator)](), $__4 = void 0;
-              $ctx.state = 4;
+              $__6 = true;
+              $__7 = false;
+              $__8 = undefined;
+              $ctx.state = 24;
+              break;
+            case 24:
+              $ctx.pushTry(10, 11);
+              $ctx.state = 13;
+              break;
+            case 13:
+              $__4 = void 0, $__3 = (Object.keys(obj))[$traceurRuntime.toProperty(Symbol.iterator)]();
+              $ctx.state = 9;
+              break;
+            case 9:
+              $ctx.state = (!($__6 = ($__4 = $__3.next()).done)) ? 5 : 7;
               break;
             case 4:
-              $ctx.state = (!($__4 = $__3.next()).done) ? 5 : -2;
+              $__6 = true;
+              $ctx.state = 9;
               break;
             case 5:
               key = $__4.value;
@@ -1192,24 +1641,78 @@ define('common/utils/generators',["di"], function($__0) {
               $ctx.maybeThrow();
               $ctx.state = 4;
               break;
+            case 7:
+              $ctx.popTry();
+              $ctx.state = 11;
+              $ctx.finallyFallThrough = -2;
+              break;
+            case 10:
+              $ctx.popTry();
+              $ctx.maybeUncatchable();
+              $__9 = $ctx.storedException;
+              $ctx.state = 16;
+              break;
+            case 16:
+              $__7 = true;
+              $__8 = $__9;
+              $ctx.state = 11;
+              $ctx.finallyFallThrough = -2;
+              break;
+            case 11:
+              $ctx.popTry();
+              $ctx.state = 22;
+              break;
+            case 22:
+              try {
+                if (!$__6 && $__3.return != null) {
+                  $__3.return();
+                }
+              } finally {
+                if ($__7) {
+                  throw $__8;
+                }
+              }
+              $ctx.state = 20;
+              break;
+            case 20:
+              $ctx.state = $ctx.finallyFallThrough;
+              break;
             default:
               return $ctx.end();
           }
-      }, $__5, this);
+      }, $__10, this);
     }),
-    keys: $traceurRuntime.initGeneratorFunction(function $__6(obj) {
-      var $__3,
+    keys: $traceurRuntime.initGeneratorFunction(function $__11(obj) {
+      var $__6,
+          $__7,
+          $__8,
           $__4,
-          key;
+          $__3,
+          key,
+          $__9;
       return $traceurRuntime.createGeneratorInstance(function($ctx) {
         while (true)
           switch ($ctx.state) {
             case 0:
-              $__3 = Object.keys(obj)[$traceurRuntime.toProperty(Symbol.iterator)](), $__4 = void 0;
-              $ctx.state = 4;
+              $__6 = true;
+              $__7 = false;
+              $__8 = undefined;
+              $ctx.state = 24;
+              break;
+            case 24:
+              $ctx.pushTry(10, 11);
+              $ctx.state = 13;
+              break;
+            case 13:
+              $__4 = void 0, $__3 = (Object.keys(obj))[$traceurRuntime.toProperty(Symbol.iterator)]();
+              $ctx.state = 9;
+              break;
+            case 9:
+              $ctx.state = (!($__6 = ($__4 = $__3.next()).done)) ? 5 : 7;
               break;
             case 4:
-              $ctx.state = (!($__4 = $__3.next()).done) ? 5 : -2;
+              $__6 = true;
+              $ctx.state = 9;
               break;
             case 5:
               key = $__4.value;
@@ -1222,12 +1725,48 @@ define('common/utils/generators',["di"], function($__0) {
               $ctx.maybeThrow();
               $ctx.state = 4;
               break;
+            case 7:
+              $ctx.popTry();
+              $ctx.state = 11;
+              $ctx.finallyFallThrough = -2;
+              break;
+            case 10:
+              $ctx.popTry();
+              $ctx.maybeUncatchable();
+              $__9 = $ctx.storedException;
+              $ctx.state = 16;
+              break;
+            case 16:
+              $__7 = true;
+              $__8 = $__9;
+              $ctx.state = 11;
+              $ctx.finallyFallThrough = -2;
+              break;
+            case 11:
+              $ctx.popTry();
+              $ctx.state = 22;
+              break;
+            case 22:
+              try {
+                if (!$__6 && $__3.return != null) {
+                  $__3.return();
+                }
+              } finally {
+                if ($__7) {
+                  throw $__8;
+                }
+              }
+              $ctx.state = 20;
+              break;
+            case 20:
+              $ctx.state = $ctx.finallyFallThrough;
+              break;
             default:
               return $ctx.end();
           }
-      }, $__6, this);
+      }, $__11, this);
     }),
-    take: $traceurRuntime.initGeneratorFunction(function $__7(iterator, n) {
+    take: $traceurRuntime.initGeneratorFunction(function $__12(iterator, n) {
       return $traceurRuntime.createGeneratorInstance(function($ctx) {
         while (true)
           switch ($ctx.state) {
@@ -1248,21 +1787,39 @@ define('common/utils/generators',["di"], function($__0) {
             default:
               return $ctx.end();
           }
-      }, $__7, this);
+      }, $__12, this);
     }),
-    values: $traceurRuntime.initGeneratorFunction(function $__8(obj) {
-      var $__3,
+    values: $traceurRuntime.initGeneratorFunction(function $__13(obj) {
+      var $__6,
+          $__7,
+          $__8,
           $__4,
-          key;
+          $__3,
+          key,
+          $__9;
       return $traceurRuntime.createGeneratorInstance(function($ctx) {
         while (true)
           switch ($ctx.state) {
             case 0:
-              $__3 = Object.keys(obj)[$traceurRuntime.toProperty(Symbol.iterator)](), $__4 = void 0;
-              $ctx.state = 4;
+              $__6 = true;
+              $__7 = false;
+              $__8 = undefined;
+              $ctx.state = 24;
+              break;
+            case 24:
+              $ctx.pushTry(10, 11);
+              $ctx.state = 13;
+              break;
+            case 13:
+              $__4 = void 0, $__3 = (Object.keys(obj))[$traceurRuntime.toProperty(Symbol.iterator)]();
+              $ctx.state = 9;
+              break;
+            case 9:
+              $ctx.state = (!($__6 = ($__4 = $__3.next()).done)) ? 5 : 7;
               break;
             case 4:
-              $ctx.state = (!($__4 = $__3.next()).done) ? 5 : -2;
+              $__6 = true;
+              $ctx.state = 9;
               break;
             case 5:
               key = $__4.value;
@@ -1275,12 +1832,48 @@ define('common/utils/generators',["di"], function($__0) {
               $ctx.maybeThrow();
               $ctx.state = 4;
               break;
+            case 7:
+              $ctx.popTry();
+              $ctx.state = 11;
+              $ctx.finallyFallThrough = -2;
+              break;
+            case 10:
+              $ctx.popTry();
+              $ctx.maybeUncatchable();
+              $__9 = $ctx.storedException;
+              $ctx.state = 16;
+              break;
+            case 16:
+              $__7 = true;
+              $__8 = $__9;
+              $ctx.state = 11;
+              $ctx.finallyFallThrough = -2;
+              break;
+            case 11:
+              $ctx.popTry();
+              $ctx.state = 22;
+              break;
+            case 22:
+              try {
+                if (!$__6 && $__3.return != null) {
+                  $__3.return();
+                }
+              } finally {
+                if ($__7) {
+                  throw $__8;
+                }
+              }
+              $ctx.state = 20;
+              break;
+            case 20:
+              $ctx.state = $ctx.finallyFallThrough;
+              break;
             default:
               return $ctx.end();
           }
-      }, $__8, this);
+      }, $__13, this);
     }),
-    keyGenerator: $traceurRuntime.initGeneratorFunction(function $__9() {
+    keyGenerator: $traceurRuntime.initGeneratorFunction(function $__14() {
       var i,
           reset;
       return $traceurRuntime.createGeneratorInstance(function($ctx) {
@@ -1313,7 +1906,7 @@ define('common/utils/generators',["di"], function($__0) {
             default:
               return $ctx.end();
           }
-      }, $__9, this);
+      }, $__14, this);
     })
   });
   Object.defineProperty(Generators.keyGenerator, "annotations", {get: function() {
@@ -4432,24 +5025,30 @@ define("stomp-websocket", function(){});
 
 define('utils/Enum',[], function() {
   
-  var EnumSymbol = function EnumSymbol(name, $__6, value) {
-    var value = $__6.value;
-    this.name = name;
-    this.value = (value !== undefined) ? value : Symbol(name);
-    delete arguments[1].value;
-    Object.assign(this, arguments[1]);
+  var EnumSymbol = function EnumSymbol(name, $__11) {
+    var $__12 = $__11,
+        value = $__12.value,
+        description = $__12.description;
+    this.sym = Symbol.for(name);
+    if (!Object.is(value, undefined))
+      this.value = value;
+    if (description)
+      this.description = description;
     Object.freeze(this);
   };
   ($traceurRuntime.createClass)(EnumSymbol, {
+    get display() {
+      return this.description || Symbol.keyFor(this.sym);
+    },
     toString: function() {
-      return this.name;
+      return this.sym;
     },
     valueOf: function() {
       return this.value;
     }
   }, {});
   Object.defineProperty(EnumSymbol, "parameters", {get: function() {
-      return [[$traceurRuntime.type.string], [], [$traceurRuntime.type.number]];
+      return [[$traceurRuntime.type.string], []];
     }});
   var Enum = function Enum(enumLiterals) {
     for (var key in enumLiterals) {
@@ -4465,10 +5064,28 @@ define('utils/Enum',[], function() {
       return (function() {
         var $__1 = 0,
             $__2 = [];
-        for (var $__4 = Object.keys($__3)[$traceurRuntime.toProperty(Symbol.iterator)](),
-            $__5 = void 0; !($__5 = $__4.next()).done; ) {
-          var key = $__5.value;
-          $__2[$__1++] = $__3[key];
+        var $__7 = true;
+        var $__8 = false;
+        var $__9 = undefined;
+        try {
+          for (var $__5 = void 0,
+              $__4 = (Object.keys($__3))[$traceurRuntime.toProperty(Symbol.iterator)](); !($__7 = ($__5 = $__4.next()).done); $__7 = true) {
+            var key = $__5.value;
+            $__2[$__1++] = $__3[key];
+          }
+        } catch ($__10) {
+          $__8 = true;
+          $__9 = $__10;
+        } finally {
+          try {
+            if (!$__7 && $__4.return != null) {
+              $__4.return();
+            }
+          } finally {
+            if ($__8) {
+              throw $__9;
+            }
+          }
         }
         return $__2;
       }());
@@ -4479,7 +5096,7 @@ define('utils/Enum',[], function() {
     contains: function(sym) {
       if (!(sym instanceof EnumSymbol))
         return false;
-      return this[sym.name] === sym;
+      return this[Symbol.keyFor(sym.sym)] === sym;
     }
   }, {});
   return {
@@ -6507,8 +7124,8 @@ define("harmony-reflect", (function (global) {
 
 define('resiliency/Retry',["../utils/Enum", "harmony-reflect"], function($__0,$__2) {
   
-  var $__9,
-      $__10;
+  var $__14,
+      $__15;
   if (!$__0 || !$__0.__esModule)
     $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
@@ -6517,50 +7134,61 @@ define('resiliency/Retry',["../utils/Enum", "harmony-reflect"], function($__0,$_
       EnumSymbol = $__1.EnumSymbol,
       Enum = $__1.Enum;
   var Reflect = $__2.default;
-  var $__8 = [{}, {}, {}],
-      INCREMENTAL = ($__9 = $__8[$traceurRuntime.toProperty(Symbol.iterator)](), ($__10 = $__9.next()).done ? void 0 : $__10.value),
-      EXPONENTIAL = ($__10 = $__9.next()).done ? void 0 : $__10.value,
-      FIBONACCI = ($__10 = $__9.next()).done ? void 0 : $__10.value;
+  var $__13 = [{}, {}, {}],
+      INCREMENTAL = ($__14 = $__13[$traceurRuntime.toProperty(Symbol.iterator)](), ($__15 = $__14.next()).done ? void 0 : $__15.value),
+      EXPONENTIAL = ($__15 = $__14.next()).done ? void 0 : $__15.value,
+      FIBONACCI = ($__15 = $__14.next()).done ? void 0 : $__15.value;
   var BackoffStrategy = new Enum({
     INCREMENTAL: INCREMENTAL,
     EXPONENTIAL: EXPONENTIAL,
     FIBONACCI: FIBONACCI
   });
-  var Retry = function Retry($__11) {
-    var $__13,
-        $__14,
-        $__15,
-        $__16,
-        $__17;
-    var $__12 = $__11,
-        maxTries = ($__13 = $__12.maxTries) === void 0 ? 1 : $__13,
-        maxDelay = ($__14 = $__12.maxDelay) === void 0 ? Infinity : $__14,
-        delayRatio = ($__15 = $__12.delayRatio) === void 0 ? 1 : $__15,
-        backoffStrategy = ($__16 = $__12.backoffStrategy) === void 0 ? BackoffStrategy.INCREMENTAL : $__16,
-        intermediate = ($__17 = $__12.intermediate) === void 0 ? function() {} : $__17;
-    this.maxTries = maxTries;
-    this.maxDelay = maxDelay;
-    this.delayRatio = delayRatio;
-    this.intermediate = intermediate;
-    switch (backoffStrategy) {
+  var Retry = function Retry($__16) {
+    var $__17 = $__16,
+        maxTries = $__17.maxTries,
+        maxDelay = $__17.maxDelay,
+        delayRatio = $__17.delayRatio,
+        backoffStrategy = $__17.backoffStrategy,
+        intermediate = $__17.intermediate;
+    this.maxTries = 1;
+    this.maxDelay = Infinity;
+    this.delayRatio = 1;
+    this.backoffStrategy = BackoffStrategy.INCREMENTAL;
+    this.intermediate = function() {};
+    if (maxTries)
+      this.maxTries = maxTries;
+    if (maxDelay)
+      this.maxDelay = maxDelay;
+    if (delayRatio)
+      this.delayRatio = delayRatio;
+    if (backoffStrategy) {
+      if (BackoffStrategy.contains(backoffStrategy)) {
+        this.backoffStrategy = backoffStrategy;
+      } else {
+        throw Error('backoffStrategy value should be of EnumSymbol<BackoffStrategy>  type');
+      }
+    }
+    if (intermediate)
+      this.intermediate = intermediate;
+    switch (this.backoffStrategy) {
       case BackoffStrategy.INCREMENTAL:
-        this.backoffStrategy = this.incremental();
+        this._backoffStrategy = this.incremental();
         break;
       case BackoffStrategy.EXPONENTIAL:
-        this.backoffStrategy = this.exponential();
+        this._backoffStrategy = this.exponential();
         break;
       case BackoffStrategy.FIBONACCI:
-        this.backoffStrategy = this.fibonacci();
+        this._backoffStrategy = this.fibonacci();
         break;
       default:
-        this.backoffStrategy = this.incremental();
+        this._backoffStrategy = this.incremental();
         break;
     }
   };
   var $Retry = Retry;
   ($traceurRuntime.createClass)(Retry, {
     try: function(target, receiver) {
-      var $__20,
+      var $__25,
           args,
           intermediate,
           remainingTries,
@@ -6582,7 +7210,7 @@ define('resiliency/Retry',["../utils/Enum", "harmony-reflect"], function($__0,$_
               Promise.resolve(this._sleep(delay * 1000)).then($ctx.createCallback(2), $ctx.errback);
               return ;
             case 2:
-              $ctx.returnValue = ($__20 = target).call.apply($__20, $traceurRuntime.spread([receiver], args)).catch((function(error) {
+              $ctx.returnValue = ($__25 = target).call.apply($__25, $traceurRuntime.spread([receiver], args)).catch((function(error) {
                 var intermediateResult = intermediate(error, remainingTries, delay);
                 if (remainingTries <= 1) {
                   throw new Error('Giving up! maximum retry attempts reached.');
@@ -6604,7 +7232,7 @@ define('resiliency/Retry',["../utils/Enum", "harmony-reflect"], function($__0,$_
       }, this);
     },
     _calculateDelay: function(remainingTries) {
-      var delay = this.delayRatio * this.backoffStrategy.next().value;
+      var delay = this.delayRatio * this._backoffStrategy.next().value;
       return Math.min(delay, this.maxDelay);
     },
     _sleep: function(ms) {
@@ -6612,7 +7240,7 @@ define('resiliency/Retry',["../utils/Enum", "harmony-reflect"], function($__0,$_
         setTimeout(resolve, ms);
       }));
     },
-    incremental: $traceurRuntime.initGeneratorFunction(function $__22() {
+    incremental: $traceurRuntime.initGeneratorFunction(function $__27() {
       var i,
           reset;
       return $traceurRuntime.createGeneratorInstance(function($ctx) {
@@ -6645,9 +7273,9 @@ define('resiliency/Retry',["../utils/Enum", "harmony-reflect"], function($__0,$_
             default:
               return $ctx.end();
           }
-      }, $__22, this);
+      }, $__27, this);
     }),
-    exponential: $traceurRuntime.initGeneratorFunction(function $__23() {
+    exponential: $traceurRuntime.initGeneratorFunction(function $__28() {
       var i,
           reset;
       return $traceurRuntime.createGeneratorInstance(function($ctx) {
@@ -6680,18 +7308,18 @@ define('resiliency/Retry',["../utils/Enum", "harmony-reflect"], function($__0,$_
             default:
               return $ctx.end();
           }
-      }, $__23, this);
+      }, $__28, this);
     }),
-    fibonacci: $traceurRuntime.initGeneratorFunction(function $__24() {
-      var $__12,
-          $__13,
-          $__14,
-          $__15,
-          $__16,
-          $__17,
+    fibonacci: $traceurRuntime.initGeneratorFunction(function $__29() {
+      var $__17,
           $__18,
           $__19,
-          $__11,
+          $__20,
+          $__21,
+          $__22,
+          $__23,
+          $__24,
+          $__16,
           prev,
           curr,
           reset;
@@ -6699,14 +7327,14 @@ define('resiliency/Retry',["../utils/Enum", "harmony-reflect"], function($__0,$_
         while (true)
           switch ($ctx.state) {
             case 0:
-              $__11 = [0, 1], prev = ($__12 = $__11[$traceurRuntime.toProperty(Symbol.iterator)](), ($__13 = $__12.next()).done ? void 0 : $__13.value), curr = ($__13 = $__12.next()).done ? void 0 : $__13.value;
+              $__16 = [0, 1], prev = ($__17 = $__16[$traceurRuntime.toProperty(Symbol.iterator)](), ($__18 = $__17.next()).done ? void 0 : $__18.value), curr = ($__18 = $__17.next()).done ? void 0 : $__18.value;
               $ctx.state = 11;
               break;
             case 11:
               $ctx.state = (true) ? 5 : -2;
               break;
             case 5:
-              ($__14 = [curr, prev + curr], prev = ($__15 = $__14[$traceurRuntime.toProperty(Symbol.iterator)](), ($__16 = $__15.next()).done ? void 0 : $__16.value), curr = ($__16 = $__15.next()).done ? void 0 : $__16.value, $__14);
+              ($__19 = [curr, prev + curr], prev = ($__20 = $__19[$traceurRuntime.toProperty(Symbol.iterator)](), ($__21 = $__20.next()).done ? void 0 : $__21.value), curr = ($__21 = $__20.next()).done ? void 0 : $__21.value, $__19);
               $ctx.state = 6;
               break;
             case 6:
@@ -6718,14 +7346,14 @@ define('resiliency/Retry',["../utils/Enum", "harmony-reflect"], function($__0,$_
               break;
             case 4:
               if (reset) {
-                ($__17 = [0, 1], prev = ($__18 = $__17[$traceurRuntime.toProperty(Symbol.iterator)](), ($__19 = $__18.next()).done ? void 0 : $__19.value), curr = ($__19 = $__18.next()).done ? void 0 : $__19.value, $__17);
+                ($__22 = [0, 1], prev = ($__23 = $__22[$traceurRuntime.toProperty(Symbol.iterator)](), ($__24 = $__23.next()).done ? void 0 : $__24.value), curr = ($__24 = $__23.next()).done ? void 0 : $__24.value, $__22);
               }
               $ctx.state = 11;
               break;
             default:
               return $ctx.end();
           }
-      }, $__24, this);
+      }, $__29, this);
     })
   }, {proxify: function(obj) {
       var classRetry;
@@ -6740,12 +7368,30 @@ define('resiliency/Retry',["../utils/Enum", "harmony-reflect"], function($__0,$_
       for (var name in obj.__proto__) {
         var methodRetry = undefined;
         if (obj[name].annotations) {
-          for (var $__6 = obj[name].annotations[$traceurRuntime.toProperty(Symbol.iterator)](),
-              $__7 = void 0; !($__7 = $__6.next()).done; ) {
-            var anno$__21 = $__7.value;
-            {
-              if (anno$__21 instanceof $Retry) {
-                methodRetry = anno$__21;
+          var $__9 = true;
+          var $__10 = false;
+          var $__11 = undefined;
+          try {
+            for (var $__7 = void 0,
+                $__6 = (obj[name].annotations)[$traceurRuntime.toProperty(Symbol.iterator)](); !($__9 = ($__7 = $__6.next()).done); $__9 = true) {
+              var anno$__26 = $__7.value;
+              {
+                if (anno$__26 instanceof $Retry) {
+                  methodRetry = anno$__26;
+                }
+              }
+            }
+          } catch ($__12) {
+            $__10 = true;
+            $__11 = $__12;
+          } finally {
+            try {
+              if (!$__9 && $__6.return != null) {
+                $__6.return();
+              }
+            } finally {
+              if ($__10) {
+                throw $__11;
               }
             }
           }
@@ -12803,10 +13449,10 @@ define('experiments/controllers/TerminalController',["../../reactive/EventBus", 
 define('experiments/services/PrimeGenerator',[], function() {
   
   
-  var $__2 = $traceurRuntime.initGeneratorFunction(numbers),
-      $__3 = $traceurRuntime.initGeneratorFunction(take),
-      $__4 = $traceurRuntime.initGeneratorFunction(filter),
-      $__5 = $traceurRuntime.initGeneratorFunction(primes);
+  var $__7 = $traceurRuntime.initGeneratorFunction(numbers),
+      $__8 = $traceurRuntime.initGeneratorFunction(take),
+      $__9 = $traceurRuntime.initGeneratorFunction(filter),
+      $__10 = $traceurRuntime.initGeneratorFunction(primes);
   function numbers(start) {
     return $traceurRuntime.createGeneratorInstance(function($ctx) {
       while (true)
@@ -12824,7 +13470,7 @@ define('experiments/services/PrimeGenerator',[], function() {
           default:
             return $ctx.end();
         }
-    }, $__2, this);
+    }, $__7, this);
   }
   function take(count, seq) {
     var i;
@@ -12852,21 +13498,39 @@ define('experiments/services/PrimeGenerator',[], function() {
           default:
             return $ctx.end();
         }
-    }, $__3, this);
+    }, $__8, this);
   }
   function filter(seq, prime) {
-    var $__0,
+    var $__3,
+        $__4,
+        $__5,
         $__1,
-        num;
+        $__0,
+        num,
+        $__6;
     return $traceurRuntime.createGeneratorInstance(function($ctx) {
       while (true)
         switch ($ctx.state) {
           case 0:
-            $__0 = seq[$traceurRuntime.toProperty(Symbol.iterator)](), $__1 = void 0;
-            $ctx.state = 4;
+            $__3 = true;
+            $__4 = false;
+            $__5 = undefined;
+            $ctx.state = 25;
+            break;
+          case 25:
+            $ctx.pushTry(11, 12);
+            $ctx.state = 14;
+            break;
+          case 14:
+            $__1 = void 0, $__0 = (seq)[$traceurRuntime.toProperty(Symbol.iterator)]();
+            $ctx.state = 10;
+            break;
+          case 10:
+            $ctx.state = (!($__3 = ($__1 = $__0.next()).done)) ? 6 : 8;
             break;
           case 4:
-            $ctx.state = (!($__1 = $__0.next()).done) ? 6 : -2;
+            $__3 = true;
+            $ctx.state = 10;
             break;
           case 6:
             num = $__1.value;
@@ -12882,10 +13546,46 @@ define('experiments/services/PrimeGenerator',[], function() {
             $ctx.maybeThrow();
             $ctx.state = 4;
             break;
+          case 8:
+            $ctx.popTry();
+            $ctx.state = 12;
+            $ctx.finallyFallThrough = -2;
+            break;
+          case 11:
+            $ctx.popTry();
+            $ctx.maybeUncatchable();
+            $__6 = $ctx.storedException;
+            $ctx.state = 17;
+            break;
+          case 17:
+            $__4 = true;
+            $__5 = $__6;
+            $ctx.state = 12;
+            $ctx.finallyFallThrough = -2;
+            break;
+          case 12:
+            $ctx.popTry();
+            $ctx.state = 23;
+            break;
+          case 23:
+            try {
+              if (!$__3 && $__0.return != null) {
+                $__0.return();
+              }
+            } finally {
+              if ($__4) {
+                throw $__5;
+              }
+            }
+            $ctx.state = 21;
+            break;
+          case 21:
+            $ctx.state = $ctx.finallyFallThrough;
+            break;
           default:
             return $ctx.end();
         }
-    }, $__4, this);
+    }, $__9, this);
   }
   function primes() {
     var seq,
@@ -12918,7 +13618,7 @@ define('experiments/services/PrimeGenerator',[], function() {
           default:
             return $ctx.end();
         }
-    }, $__5, this);
+    }, $__10, this);
   }
   return {
     get take() {
@@ -12966,11 +13666,29 @@ define('experiments/controllers/ExperimentController',["diary", "../services/Pri
     $scope.genPrime = (function() {
       var max = arguments[0] !== (void 0) ? arguments[0] : 10;
       $scope.output = '';
-      for (var $__6 = take(max, primes())[$traceurRuntime.toProperty(Symbol.iterator)](),
-          $__7 = void 0; !($__7 = $__6.next()).done; ) {
-        var prime = $__7.value;
-        {
-          $scope.output += ', ' + prime;
+      var $__9 = true;
+      var $__10 = false;
+      var $__11 = undefined;
+      try {
+        for (var $__7 = void 0,
+            $__6 = (take(max, primes()))[$traceurRuntime.toProperty(Symbol.iterator)](); !($__9 = ($__7 = $__6.next()).done); $__9 = true) {
+          var prime = $__7.value;
+          {
+            $scope.output += ', ' + prime;
+          }
+        }
+      } catch ($__12) {
+        $__10 = true;
+        $__11 = $__12;
+      } finally {
+        try {
+          if (!$__9 && $__6.return != null) {
+            $__6.return();
+          }
+        } finally {
+          if ($__10) {
+            throw $__11;
+          }
         }
       }
     });
@@ -13111,7 +13829,7 @@ define('experiments/controllers/IoTController',["http://api.pinocc.io/pinoccio.j
       console.log('data', data);
       growl.info(("type: " + data.type + ", scout: " + data.scout + ", value: " + data.value), {
         title: data.type,
-        ttl: 20000
+        ttl: 10000
       });
       if (data.type === 'temp' && data.troop === '1' && data.scout === '4') {
         $scope.$apply((function() {
@@ -13119,14 +13837,210 @@ define('experiments/controllers/IoTController',["http://api.pinocc.io/pinoccio.j
         }));
       }
       if (data.type === 'announce' && data.troop === '1' && data.scout === '4') {
-        $scope.$apply((function() {
-          $__2.move = data.value.report[1];
-        }));
+        growl.error(data.value.report[1], {
+          title: data.type,
+          ttl: 40000
+        });
       }
     }));
   };
   ($traceurRuntime.createClass)(IoTController, {}, {});
   var $__default = IoTController;
+  return {
+    get default() {
+      return $__default;
+    },
+    __esModule: true
+  };
+});
+
+define('reactive/Observable',[], function() {
+  
+  var generator = Symbol();
+  var onDone = Symbol();
+  var DecoratedGenerator = function DecoratedGenerator(_generator, _onDone) {
+    this[generator] = _generator;
+    this[onDone] = _onDone;
+  };
+  ($traceurRuntime.createClass)(DecoratedGenerator, {
+    next: function(value) {
+      var result = this[generator].next(value);
+      if (result !== undefined && result.done) {
+        this[onDone].call(this);
+      }
+      return result;
+    },
+    throw: function(error) {
+      this[onDone].call(this);
+      return this[generator].throw(error);
+    },
+    return: function(value) {
+      this[onDone].call(this);
+      return this[generator].return(value);
+    }
+  }, {});
+  var Observable = function Observable(observe) {
+    this[Symbol.observer] = observe;
+  };
+  var $Observable = Observable;
+  ($traceurRuntime.createClass)(Observable, {}, {fromEvent: function(element, type) {
+      return new $Observable(function(generator) {
+        var decoratedGenerator = new DecoratedGenerator(generator, (function() {
+          return element.removeEventListener(type, handler);
+        }));
+        var handler = (function(event) {
+          return decoratedGenerator.next(event);
+        });
+        element.addEventListener(type, handler);
+        return decoratedGenerator;
+      });
+    }});
+  var $__default = Observable;
+  return {
+    get default() {
+      return $__default;
+    },
+    __esModule: true
+  };
+});
+
+define('experiments/controllers/AsyncController',["../../reactive/Observable"], function($__0) {
+  
+  if (!$__0 || !$__0.__esModule)
+    $__0 = {default: $__0};
+  var Observable = $__0.default;
+  var AsyncController = function AsyncController($scope) {
+    var $__4 = $traceurRuntime.initAsyncGeneratorFunction(coordinates);
+    var $__2 = this;
+    function coordinates() {
+      return $traceurRuntime.createAsyncGeneratorInstance(function($__5) {
+        var $__7;
+        return $traceurRuntime.asyncWrap(function($ctx) {
+          while (true)
+            switch ($ctx.state) {
+              case 0:
+                $__7 = (void 0);
+                $ctx.state = 11;
+                break;
+              case 11:
+                Promise.resolve($traceurRuntime.observeForEach(Observable.fromEvent(window, 'mousemove')[$traceurRuntime.toProperty(Symbol.observer)].bind(Observable.fromEvent(window, 'mousemove')), function($__8) {
+                  var $__6,
+                      event;
+                  return $traceurRuntime.asyncWrap(function($ctx) {
+                    while (true)
+                      switch ($ctx.state) {
+                        case 0:
+                          $__6 = this;
+                          try {
+                            event = $__8;
+                            $__5.yield({
+                              x: event.clientX,
+                              y: event.clientY
+                            });
+                          } catch (e) {
+                            $__6.throw(e);
+                          }
+                          $ctx.state = -2;
+                          break;
+                        default:
+                          return $ctx.end();
+                      }
+                  }, this);
+                })).then($ctx.createCallback(2), $ctx.errback);
+                return ;
+              case 2:
+                switch ($__7) {
+                  case (void 0):
+                    $ctx.state = 9;
+                    break;
+                  default:
+                    $ctx.state = 5;
+                    break;
+                }
+                break;
+              case 6:
+                $ctx.state = -2;
+                break;
+              case 5:
+                $ctx.returnValue = $__7.v;
+                $ctx.state = 6;
+                break;
+              case 9:
+                $ctx.state = (false) ? 0 : -2;
+                break;
+              default:
+                return $ctx.end();
+            }
+        }, this);
+      }, $__4);
+    }
+    ((function() {
+      var $__7;
+      return $traceurRuntime.asyncWrap(function($ctx) {
+        while (true)
+          switch ($ctx.state) {
+            case 0:
+              $__7 = (void 0);
+              $ctx.state = 11;
+              break;
+            case 11:
+              Promise.resolve($traceurRuntime.observeForEach(coordinates()[$traceurRuntime.toProperty(Symbol.observer)].bind(coordinates()), function($__8) {
+                var $__6,
+                    $__9,
+                    x,
+                    y;
+                return $traceurRuntime.asyncWrap(function($ctx) {
+                  while (true)
+                    switch ($ctx.state) {
+                      case 0:
+                        $__6 = this;
+                        try {
+                          $__9 = $__8, x = $__9.x, y = $__9.y;
+                          $scope.$apply((function() {
+                            $__2.move = {
+                              x: x,
+                              y: y
+                            };
+                          }));
+                        } catch (e) {
+                          $__6.throw(e);
+                        }
+                        $ctx.state = -2;
+                        break;
+                      default:
+                        return $ctx.end();
+                    }
+                }, this);
+              })).then($ctx.createCallback(2), $ctx.errback);
+              return ;
+            case 2:
+              switch ($__7) {
+                case (void 0):
+                  $ctx.state = 9;
+                  break;
+                default:
+                  $ctx.state = 5;
+                  break;
+              }
+              break;
+            case 6:
+              $ctx.state = -2;
+              break;
+            case 5:
+              $ctx.returnValue = $__7.v;
+              $ctx.state = 6;
+              break;
+            case 9:
+              $ctx.state = (false) ? 0 : -2;
+              break;
+            default:
+              return $ctx.end();
+          }
+      }, this);
+    }))();
+  };
+  ($traceurRuntime.createClass)(AsyncController, {}, {});
+  var $__default = AsyncController;
   return {
     get default() {
       return $__default;
@@ -13186,7 +14100,7 @@ define('common/utils/util',[], function() {
       return ((data === null) ? '' : data.toString());
     }
     var buffer = [];
-    for (var name = void 0 in data) {
+    for (var name in data) {
       if (!data.hasOwnProperty(name)) {
         continue;
       }
@@ -13375,7 +14289,7 @@ define('experiments/elements/highlighter',[], function() {
   };
 });
 
-define('experiments/index',["./routes", "./services/EmailService", "./controllers/TodoController", "./controllers/MessagingController", "./controllers/TerminalController", "./controllers/ExperimentController", "./controllers/ElementsController", "./controllers/GrowlTranslateDemoController", "./controllers/IoTController", "./elements/myElement/MyElement", "./elements/customButton/CustomButton", "./elements/myNews/MyNews", "./elements/highlighter"], function($__0,$__2,$__4,$__6,$__8,$__10,$__12,$__14,$__16,$__18,$__20,$__22,$__24) {
+define('experiments/index',["./routes", "./services/EmailService", "./controllers/TodoController", "./controllers/MessagingController", "./controllers/TerminalController", "./controllers/ExperimentController", "./controllers/ElementsController", "./controllers/GrowlTranslateDemoController", "./controllers/IoTController", "./controllers/AsyncController", "./elements/myElement/MyElement", "./elements/customButton/CustomButton", "./elements/myNews/MyNews", "./elements/highlighter"], function($__0,$__2,$__4,$__6,$__8,$__10,$__12,$__14,$__16,$__18,$__20,$__22,$__24,$__26) {
   
   if (!$__0 || !$__0.__esModule)
     $__0 = {default: $__0};
@@ -13403,6 +14317,8 @@ define('experiments/index',["./routes", "./services/EmailService", "./controller
     $__22 = {default: $__22};
   if (!$__24 || !$__24.__esModule)
     $__24 = {default: $__24};
+  if (!$__26 || !$__26.__esModule)
+    $__26 = {default: $__26};
   var routes = $__0.default;
   var EmailService = $__2.default;
   var TodoController = $__4.default;
@@ -13412,10 +14328,11 @@ define('experiments/index',["./routes", "./services/EmailService", "./controller
   var ElementsController = $__12.default;
   var GrowlTranslateDemoController = $__14.default;
   var IoTController = $__16.default;
-  var MyElement = $__18.default;
-  var CustomButton = $__20.default;
-  var MyNews = $__22.default;
-  var highlighter = $__24.default;
+  var AsyncController = $__18.default;
+  var MyElement = $__20.default;
+  var CustomButton = $__22.default;
+  var MyNews = $__24.default;
+  var highlighter = $__26.default;
   var moduleName = 'spaApp.experiments';
   var experimentsModule = angular.module(moduleName, []);
   experimentsModule.service('EmailService', EmailService);
@@ -13427,6 +14344,7 @@ define('experiments/index',["./routes", "./services/EmailService", "./controller
   experimentsModule.controller('ElementsController', ElementsController);
   experimentsModule.controller('GrowlTranslateDemoController', GrowlTranslateDemoController);
   experimentsModule.controller('IoTController', IoTController);
+  experimentsModule.controller('AsyncController', AsyncController);
   experimentsModule.config(routes);
   if ('registerElement' in document) {
     document.registerElement('my-element', MyElement);

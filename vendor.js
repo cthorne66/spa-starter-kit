@@ -1,6 +1,6 @@
 /**
- * @license AngularJS v1.3.9
- * (c) 2010-2014 Google, Inc. http://angularjs.org
+ * @license AngularJS v1.4.0-build.3851+sha.ec27ce7
+ * (c) 2010-2015 Google, Inc. http://angularjs.org
  * License: MIT
  */
 (function(window, angular, undefined) {
@@ -1333,8 +1333,7 @@ angular.module('ngAnimate', ['ng'])
           } else if (lastAnimation.event == 'setClass') {
             animationsToCancel.push(lastAnimation);
             cleanup(element, className);
-          }
-          else if (runningAnimations[className]) {
+          } else if (runningAnimations[className]) {
             var current = runningAnimations[className];
             if (current.event == animationEvent) {
               skipAnimation = true;
@@ -1875,7 +1874,7 @@ angular.module('ngAnimate', ['ng'])
           return;
         }
 
-        if (!staggerTime && styles) {
+        if (!staggerTime && styles && Object.keys(styles).length > 0) {
           if (!timings.transitionDuration) {
             element.css('transition', timings.animationDuration + 's linear all');
             appliedStyles.push('transition');
@@ -2140,8 +2139,8 @@ angular.module('ngAnimate', ['ng'])
 define("angular-animate", ["angular"], function(){});
 
 /**
- * @license AngularJS v1.3.9
- * (c) 2010-2014 Google, Inc. http://angularjs.org
+ * @license AngularJS v1.4.0-build.3851+sha.ec27ce7
+ * (c) 2010-2015 Google, Inc. http://angularjs.org
  * License: MIT
  */
 (function(window, angular, undefined) {
@@ -2382,16 +2381,18 @@ var svgAttrs = makeMap('accent-height,accumulate,additive,alphabetic,arabic-form
     'underline-position,underline-thickness,unicode,unicode-range,units-per-em,values,version,' +
     'viewBox,visibility,width,widths,x,x-height,x1,x2,xlink:actuate,xlink:arcrole,xlink:role,' +
     'xlink:show,xlink:title,xlink:type,xml:base,xml:lang,xml:space,xmlns,xmlns:xlink,y,y1,y2,' +
-    'zoomAndPan');
+    'zoomAndPan', true);
 
 var validAttrs = angular.extend({},
                                 uriAttrs,
                                 svgAttrs,
                                 htmlAttrs);
 
-function makeMap(str) {
+function makeMap(str, lowercaseKeys) {
   var obj = {}, items = str.split(','), i;
-  for (i = 0; i < items.length; i++) obj[items[i]] = true;
+  for (i = 0; i < items.length; i++) {
+    obj[lowercaseKeys ? angular.lowercase(items[i]) : items[i]] = true;
+  }
   return obj;
 }
 
@@ -2417,14 +2418,14 @@ function htmlParser(html, handler) {
     }
   }
   var index, chars, match, stack = [], last = html, text;
-  stack.last = function() { return stack[ stack.length - 1 ]; };
+  stack.last = function() { return stack[stack.length - 1]; };
 
   while (html) {
     text = '';
     chars = true;
 
     // Make sure we're not in a script or style element
-    if (!stack.last() || !specialElements[ stack.last() ]) {
+    if (!stack.last() || !specialElements[stack.last()]) {
 
       // Comment
       if (html.indexOf("<!--") === 0) {
@@ -2482,7 +2483,8 @@ function htmlParser(html, handler) {
       }
 
     } else {
-      html = html.replace(new RegExp("(.*)<\\s*\\/\\s*" + stack.last() + "[^>]*>", 'i'),
+      // IE versions 9 and 10 do not understand the regex '[^]', so using a workaround with [\W\w].
+      html = html.replace(new RegExp("([\\W\\w]*)<\\s*\\/\\s*" + stack.last() + "[^>]*>", 'i'),
         function(all, text) {
           text = text.replace(COMMENT_REGEXP, "$1").replace(CDATA_REGEXP, "$1");
 
@@ -2506,20 +2508,21 @@ function htmlParser(html, handler) {
 
   function parseStartTag(tag, tagName, rest, unary) {
     tagName = angular.lowercase(tagName);
-    if (blockElements[ tagName ]) {
-      while (stack.last() && inlineElements[ stack.last() ]) {
+    if (blockElements[tagName]) {
+      while (stack.last() && inlineElements[stack.last()]) {
         parseEndTag("", stack.last());
       }
     }
 
-    if (optionalEndTagElements[ tagName ] && stack.last() == tagName) {
+    if (optionalEndTagElements[tagName] && stack.last() == tagName) {
       parseEndTag("", tagName);
     }
 
-    unary = voidElements[ tagName ] || !!unary;
+    unary = voidElements[tagName] || !!unary;
 
-    if (!unary)
+    if (!unary) {
       stack.push(tagName);
+    }
 
     var attrs = {};
 
@@ -2538,16 +2541,17 @@ function htmlParser(html, handler) {
   function parseEndTag(tag, tagName) {
     var pos = 0, i;
     tagName = angular.lowercase(tagName);
-    if (tagName)
+    if (tagName) {
       // Find the closest opened tag of the same type
-      for (pos = stack.length - 1; pos >= 0; pos--)
-        if (stack[ pos ] == tagName)
-          break;
+      for (pos = stack.length - 1; pos >= 0; pos--) {
+        if (stack[pos] == tagName) break;
+      }
+    }
 
     if (pos >= 0) {
       // Close all the open elements, up the stack
       for (i = stack.length - 1; i >= pos; i--)
-        if (handler.end) handler.end(stack[ i ]);
+        if (handler.end) handler.end(stack[i]);
 
       // Remove the open elements from the stack
       stack.length = pos;
@@ -2556,7 +2560,6 @@ function htmlParser(html, handler) {
 }
 
 var hiddenPre=document.createElement("pre");
-var spaceRe = /^(\s*)([\s\S]*?)(\s*)$/;
 /**
  * decodes all entities into regular string
  * @param value
@@ -2565,22 +2568,10 @@ var spaceRe = /^(\s*)([\s\S]*?)(\s*)$/;
 function decodeEntities(value) {
   if (!value) { return ''; }
 
-  // Note: IE8 does not preserve spaces at the start/end of innerHTML
-  // so we must capture them and reattach them afterward
-  var parts = spaceRe.exec(value);
-  var spaceBefore = parts[1];
-  var spaceAfter = parts[3];
-  var content = parts[2];
-  if (content) {
-    hiddenPre.innerHTML=content.replace(/</g,"&lt;");
-    // innerText depends on styling as it doesn't display hidden elements.
-    // Therefore, it's better to use textContent not to cause unnecessary
-    // reflows. However, IE<9 don't support textContent so the innerText
-    // fallback is necessary.
-    content = 'textContent' in hiddenPre ?
-      hiddenPre.textContent : hiddenPre.innerText;
-  }
-  return spaceBefore + content + spaceAfter;
+  hiddenPre.innerHTML = value.replace(/</g,"&lt;");
+  // innerText depends on styling as it doesn't display hidden elements.
+  // Therefore, it's better to use textContent not to cause unnecessary reflows.
+  return hiddenPre.textContent;
 }
 
 /**
@@ -14296,9 +14287,9 @@ angular.module('truncate', [])
 define("angular-truncate", ["angular"], function(){});
 
 /*!
- * angular-translate - v2.5.2 - 2014-12-10
+ * angular-translate - v2.6.0 - 2015-02-08
  * http://github.com/angular-translate/angular-translate
- * Copyright (c) 2014 ; Licensed MIT
+ * Copyright (c) 2015 ; Licensed MIT
  */
 /**
  * @ngdoc overview
@@ -14345,7 +14336,7 @@ angular.module('pascalprecht.translate', ['ng'])
  * and similar to configure translation behavior directly inside of a module.
  *
  */
-angular.module('pascalprecht.translate').provider('$translate', ['$STORAGE_KEY', function ($STORAGE_KEY) {
+angular.module('pascalprecht.translate').provider('$translate', ['$STORAGE_KEY', '$windowProvider', function ($STORAGE_KEY, $windowProvider) {
 
   var $translationTable = {},
       $preferredLanguage,
@@ -14369,13 +14360,14 @@ angular.module('pascalprecht.translate').provider('$translate', ['$STORAGE_KEY',
       $notFoundIndicatorRight,
       $postCompilingEnabled = false,
       NESTED_OBJECT_DELIMITER = '.',
-      loaderCache;
+      loaderCache,
+      directivePriority = 0;
 
-  var version = '2.5.2';
+  var version = '2.6.0';
 
   // tries to determine the browsers language
   var getFirstBrowserLanguage = function () {
-    var nav = window.navigator,
+    var nav = $windowProvider.$get().navigator,
         browserLanguagePropertyKeys = ['language', 'browserLanguage', 'systemLanguage', 'userLanguage'],
         i,
         language;
@@ -15100,6 +15092,28 @@ angular.module('pascalprecht.translate').provider('$translate', ['$STORAGE_KEY',
   };
 
   /**
+   * @ngdoc function
+   * @name pascalprecht.translate.$translateProvider#directivePriority
+   * @methodOf pascalprecht.translate.$translateProvider
+   *
+   * @description
+   * Sets the default priority of the translate directive. The standard value is `0`.
+   * Calling this function without an argument will return the current value.
+   *
+   * @param {number} priority for the translate-directive
+   */
+  this.directivePriority = function (priority) {
+    if (priority === undefined) {
+      // getter
+      return directivePriority;
+    } else {
+      // setter with chaining
+      directivePriority = priority;
+      return this;
+    }
+  };
+
+  /**
    * @ngdoc object
    * @name pascalprecht.translate.$translate
    * @requires $interpolate
@@ -15140,7 +15154,7 @@ angular.module('pascalprecht.translate').provider('$translate', ['$STORAGE_KEY',
           fallbackIndex,
           startFallbackIteration;
 
-      var $translate = function (translationId, interpolateParams, interpolationId) {
+      var $translate = function (translationId, interpolateParams, interpolationId, defaultTranslationText) {
 
         // Duck detection: If the first argument is an array, a bunch of translations was requested.
         // The result is an object.
@@ -15159,7 +15173,7 @@ angular.module('pascalprecht.translate').provider('$translate', ['$STORAGE_KEY',
                 deferred.resolve([translationId, value]);
               };
               // we don't care whether the promise was resolved or rejected; just store the values
-              $translate(translationId, interpolateParams, interpolationId).then(regardless, regardless);
+              $translate(translationId, interpolateParams, interpolationId, defaultTranslationText).then(regardless, regardless);
               return deferred.promise;
             };
             for (var i = 0, c = translationIds.length; i < c; i++) {
@@ -15216,10 +15230,10 @@ angular.module('pascalprecht.translate').provider('$translate', ['$STORAGE_KEY',
           // no promise to wait for? okay. Then there's no loader registered
           // nor is a one pending for language that comes from storage.
           // We can just translate.
-          determineTranslation(translationId, interpolateParams, interpolationId).then(deferred.resolve, deferred.reject);
+          determineTranslation(translationId, interpolateParams, interpolationId, defaultTranslationText).then(deferred.resolve, deferred.reject);
         } else {
           promiseToWaitFor.then(function () {
-            determineTranslation(translationId, interpolateParams, interpolationId).then(deferred.resolve, deferred.reject);
+            determineTranslation(translationId, interpolateParams, interpolationId, defaultTranslationText).then(deferred.resolve, deferred.reject);
           }, deferred.reject);
         }
         return deferred.promise;
@@ -15412,7 +15426,13 @@ angular.module('pascalprecht.translate').provider('$translate', ['$STORAGE_KEY',
         getTranslationTable(langKey).then(function (translationTable) {
           if (Object.prototype.hasOwnProperty.call(translationTable, translationId)) {
             Interpolator.setLocale(langKey);
-            deferred.resolve(Interpolator.interpolate(translationTable[translationId], interpolateParams));
+            var translation = translationTable[translationId];
+            if (translation.substr(0, 2) === '@:') {
+              getFallbackTranslation(langKey, translation.substr(2), interpolateParams, Interpolator)
+                .then(deferred.resolve, deferred.reject);
+            } else {
+              deferred.resolve(Interpolator.interpolate(translationTable[translationId], interpolateParams));
+            }
             Interpolator.setLocale($uses);
           } else {
             deferred.reject();
@@ -15442,6 +15462,9 @@ angular.module('pascalprecht.translate').provider('$translate', ['$STORAGE_KEY',
         if (translationTable && Object.prototype.hasOwnProperty.call(translationTable, translationId)) {
           Interpolator.setLocale(langKey);
           result = Interpolator.interpolate(translationTable[translationId], interpolateParams);
+          if (result.substr(0, 2) === '@:') {
+            return getFallbackTranslationInstant(langKey, result.substr(2), interpolateParams, Interpolator);
+          }
           Interpolator.setLocale($uses);
         }
 
@@ -15487,7 +15510,7 @@ angular.module('pascalprecht.translate').provider('$translate', ['$STORAGE_KEY',
        * @param Interpolator
        * @returns {Q.promise} Promise that will resolve to the translation.
        */
-      var resolveForFallbackLanguage = function (fallbackLanguageIndex, translationId, interpolateParams, Interpolator) {
+      var resolveForFallbackLanguage = function (fallbackLanguageIndex, translationId, interpolateParams, Interpolator, defaultTranslationText) {
         var deferred = $q.defer();
 
         if (fallbackLanguageIndex < $fallbackLanguage.length) {
@@ -15497,12 +15520,19 @@ angular.module('pascalprecht.translate').provider('$translate', ['$STORAGE_KEY',
             function () {
               // Look in the next fallback language for a translation.
               // It delays the resolving by passing another promise to resolve.
-              resolveForFallbackLanguage(fallbackLanguageIndex + 1, translationId, interpolateParams, Interpolator).then(deferred.resolve);
+              resolveForFallbackLanguage(fallbackLanguageIndex + 1, translationId, interpolateParams, Interpolator, defaultTranslationText).then(deferred.resolve);
             }
           );
         } else {
           // No translation found in any fallback language
-          deferred.resolve(translateByHandler(translationId));
+          // if a default translation text is set in the directive, then return this as a result
+          if (defaultTranslationText) {
+            deferred.resolve(defaultTranslationText);
+          } else {
+            // if no default translation is set and an error handler is defined, send it to the handler
+            // and then return the result
+            deferred.resolve(translateByHandler(translationId));
+          }
         }
         return deferred.promise;
       };
@@ -15541,9 +15571,9 @@ angular.module('pascalprecht.translate').provider('$translate', ['$STORAGE_KEY',
        * @param Interpolator
        * @returns {Q.promise} Promise, that resolves to the translation.
        */
-      var fallbackTranslation = function (translationId, interpolateParams, Interpolator) {
+      var fallbackTranslation = function (translationId, interpolateParams, Interpolator, defaultTranslationText) {
         // Start with the fallbackLanguage with index 0
-        return resolveForFallbackLanguage((startFallbackIteration>0 ? startFallbackIteration : fallbackIndex), translationId, interpolateParams, Interpolator);
+        return resolveForFallbackLanguage((startFallbackIteration>0 ? startFallbackIteration : fallbackIndex), translationId, interpolateParams, Interpolator, defaultTranslationText);
       };
 
       /**
@@ -15559,7 +15589,7 @@ angular.module('pascalprecht.translate').provider('$translate', ['$STORAGE_KEY',
         return resolveForFallbackLanguageInstant((startFallbackIteration>0 ? startFallbackIteration : fallbackIndex), translationId, interpolateParams, Interpolator);
       };
 
-      var determineTranslation = function (translationId, interpolateParams, interpolationId) {
+      var determineTranslation = function (translationId, interpolateParams, interpolationId, defaultTranslationText) {
 
         var deferred = $q.defer();
 
@@ -15573,7 +15603,7 @@ angular.module('pascalprecht.translate').provider('$translate', ['$STORAGE_KEY',
           // If using link, rerun $translate with linked translationId and return it
           if (translation.substr(0, 2) === '@:') {
 
-            $translate(translation.substr(2), interpolateParams, interpolationId)
+            $translate(translation.substr(2), interpolateParams, interpolationId, defaultTranslationText)
               .then(deferred.resolve, deferred.reject);
           } else {
             deferred.resolve(Interpolator.interpolate(translation, interpolateParams));
@@ -15589,7 +15619,7 @@ angular.module('pascalprecht.translate').provider('$translate', ['$STORAGE_KEY',
           // we try it now with one or more fallback languages, if fallback language(s) is
           // configured.
           if ($uses && $fallbackLanguage && $fallbackLanguage.length) {
-            fallbackTranslation(translationId, interpolateParams, Interpolator)
+            fallbackTranslation(translationId, interpolateParams, Interpolator, defaultTranslationText)
                 .then(function (translation) {
                   deferred.resolve(translation);
                 }, function (_translationId) {
@@ -15599,9 +15629,17 @@ angular.module('pascalprecht.translate').provider('$translate', ['$STORAGE_KEY',
             // looks like the requested translation id doesn't exists.
             // Now, if there is a registered handler for missing translations and no
             // asyncLoader is pending, we execute the handler
-            deferred.resolve(missingTranslationHandlerTranslation);
+            if (defaultTranslationText) {
+              deferred.resolve(defaultTranslationText);
+              } else {
+                deferred.resolve(missingTranslationHandlerTranslation);
+              }
           } else {
-            deferred.reject(applyNotFoundIndicators(translationId));
+            if (defaultTranslationText) {
+              deferred.resolve(defaultTranslationText);
+            } else {
+              deferred.reject(applyNotFoundIndicators(translationId));
+            }
           }
         }
         return deferred.promise;
@@ -16023,6 +16061,8 @@ angular.module('pascalprecht.translate').provider('$translate', ['$STORAGE_KEY',
           if ($translationTable[possibleLangKey]) {
             if (typeof $translationTable[possibleLangKey][translationId] !== 'undefined') {
               result = determineTranslationInstant(translationId, interpolateParams, interpolationId);
+            } else if ($notFoundIndicatorLeft || $notFoundIndicatorRight) {
+              result = applyNotFoundIndicators(translationId);
             }
           }
           if (typeof result !== 'undefined') {
@@ -16067,6 +16107,11 @@ angular.module('pascalprecht.translate').provider('$translate', ['$STORAGE_KEY',
        */
       $translate.loaderCache = function () {
         return loaderCache;
+      };
+
+      // internal purpose only
+      $translate.directivePriority = function () {
+        return directivePriority;
       };
 
       if ($loaderFactory) {
@@ -16118,7 +16163,11 @@ angular.module('pascalprecht.translate').factory('$translateDefaultInterpolation
           var result = {};
           for (var key in params) {
             if (Object.prototype.hasOwnProperty.call(params, key)) {
-              result[key] = angular.element('<div></div>').text(params[key]).html();
+              if (angular.isNumber(params[key])) {
+                result[key] = params[key];
+              } else {
+                result[key] = angular.element('<div></div>').text(params[key]).html();
+              }
             }
           }
           return result;
@@ -16280,9 +16329,23 @@ angular.module('pascalprecht.translate')
  */
 .directive('translate', ['$translate', '$q', '$interpolate', '$compile', '$parse', '$rootScope', function ($translate, $q, $interpolate, $compile, $parse, $rootScope) {
 
+  /**
+   * @name trim
+   * @private
+   *
+   * @description
+   * trim polyfill
+   *
+   * @returns {string} The string stripped of whitespace from both ends
+   */
+  var trim = function() {
+    return this.replace(/^\s+|\s+$/g, '');
+  };
+
   return {
     restrict: 'AE',
     scope: true,
+    priority: $translate.directivePriority(),
     compile: function (tElement, tAttr) {
 
       var translateValuesExist = (tAttr.translateValues) ?
@@ -16293,31 +16356,38 @@ angular.module('pascalprecht.translate')
 
       var translateValueExist = tElement[0].outerHTML.match(/translate-value-+/i);
 
-      var interpolateRegExp = "^(.*)(" + $interpolate.startSymbol() + ".*" + $interpolate.endSymbol() + ")(.*)",
-          watcherRegExp = "^(.*)" + $interpolate.startSymbol() + "(.*)" + $interpolate.endSymbol() + "(.*)";
+      var interpolateRegExp = '^(.*)(' + $interpolate.startSymbol() + '.*' + $interpolate.endSymbol() + ')(.*)',
+          watcherRegExp = '^(.*)' + $interpolate.startSymbol() + '(.*)' + $interpolate.endSymbol() + '(.*)';
 
       return function linkFn(scope, iElement, iAttr) {
 
         scope.interpolateParams = {};
-        scope.preText = "";
-        scope.postText = "";
+        scope.preText = '';
+        scope.postText = '';
         var translationIds = {};
 
         // Ensures any change of the attribute "translate" containing the id will
         // be re-stored to the scope's "translationId".
         // If the attribute has no content, the element's text value (white spaces trimmed off) will be used.
         var observeElementTranslation = function (translationId) {
+
+          // Remove any old watcher
+          if (angular.isFunction(observeElementTranslation._unwatchOld)) {
+            observeElementTranslation._unwatchOld();
+            observeElementTranslation._unwatchOld = undefined;
+          }
+
           if (angular.equals(translationId , '') || !angular.isDefined(translationId)) {
             // Resolve translation id by inner html if required
-            var interpolateMatches = iElement.text().match(interpolateRegExp);
+            var interpolateMatches = trim.apply(iElement.text()).match(interpolateRegExp);
             // Interpolate translation id if required
             if (angular.isArray(interpolateMatches)) {
               scope.preText = interpolateMatches[1];
               scope.postText = interpolateMatches[3];
               translationIds.translate = $interpolate(interpolateMatches[2])(scope.$parent);
-              watcherMatches = iElement.text().match(watcherRegExp);
+              var watcherMatches = iElement.text().match(watcherRegExp);
               if (angular.isArray(watcherMatches) && watcherMatches[2] && watcherMatches[2].length) {
-                scope.$watch(watcherMatches[2], function (newValue) {
+                observeElementTranslation._unwatchOld = scope.$watch(watcherMatches[2], function (newValue) {
                   translationIds.translate = newValue;
                   updateTranslations();
                 });
@@ -16338,12 +16408,23 @@ angular.module('pascalprecht.translate')
           });
         };
 
+        var firstAttributeChangedEvent = true;
         iAttr.$observe('translate', function (translationId) {
-          observeElementTranslation(translationId);
+          if (typeof translationId === 'undefined') {
+            // case of element "<translate>xyz</translate>"
+            observeElementTranslation('');
+          } else {
+            // case of regular attribute
+            if (translationId !== '' || !firstAttributeChangedEvent) {
+              translationIds.translate = translationId;
+              updateTranslations();
+            }
+          }
+          firstAttributeChangedEvent = false;
         });
 
         for (var translateAttr in iAttr) {
-          if(iAttr.hasOwnProperty(translateAttr) && translateAttr.substr(0, 13) === 'translateAttr') {
+          if (iAttr.hasOwnProperty(translateAttr) && translateAttr.substr(0, 13) === 'translateAttr') {
             observeAttributeTranslation(translateAttr);
           }
         }
@@ -16379,20 +16460,25 @@ angular.module('pascalprecht.translate')
         // Master update function
         var updateTranslations = function () {
           for (var key in translationIds) {
-            if (translationIds.hasOwnProperty(key) && translationIds[key]) {
-              updateTranslation(key, translationIds[key], scope, scope.interpolateParams);
+            if (translationIds.hasOwnProperty(key)) {
+              updateTranslation(key, translationIds[key], scope, scope.interpolateParams, scope.defaultText);
             }
           }
         };
 
         // Put translation processing function outside loop
-        var updateTranslation = function(translateAttr, translationId, scope, interpolateParams) {
-          $translate(translationId, interpolateParams, translateInterpolation)
-            .then(function (translation) {
-              applyTranslation(translation, scope, true, translateAttr);
-            }, function (translationId) {
-              applyTranslation(translationId, scope, false, translateAttr);
-            });
+        var updateTranslation = function(translateAttr, translationId, scope, interpolateParams, defaultTranslationText) {
+          if (translationId) {
+            $translate(translationId, interpolateParams, translateInterpolation, defaultTranslationText)
+              .then(function (translation) {
+                applyTranslation(translation, scope, true, translateAttr);
+              }, function (translationId) {
+                applyTranslation(translationId, scope, false, translateAttr);
+              });
+          } else {
+            // as an empty string cannot be translated, we can solve this using successful=false
+            applyTranslation(translationId, scope, false, translateAttr);
+          }
         };
 
         var applyTranslation = function (value, scope, successful, translateAttr) {
@@ -16558,9 +16644,9 @@ angular.module('pascalprecht.translate')
 define("angular-translate", ["angular"], function(){});
 
 /*!
- * angular-translate - v2.5.2 - 2014-12-10
+ * angular-translate - v2.6.0 - 2015-02-08
  * http://github.com/angular-translate/angular-translate
- * Copyright (c) 2014 ; Licensed MIT
+ * Copyright (c) 2015 ; Licensed MIT
  */
 angular.module('pascalprecht.translate')
 /**
@@ -16582,10 +16668,11 @@ angular.module('pascalprecht.translate')
    * @description
    * Represents Part object to add and set parts at runtime.
    */
-  function Part(name) {
+  function Part(name, priority) {
     this.name = name;
     this.isActive = true;
     this.tables = {};
+    this.priority = priority || 0;
   }
 
   /**
@@ -16666,6 +16753,19 @@ angular.module('pascalprecht.translate')
     return dst;
   }
 
+  function getPrioritizedParts() {
+    var prioritizedParts = [];
+    for(var part in parts) {
+      if (parts[part].isActive) {
+        prioritizedParts.push(parts[part]);
+      }
+    }
+    prioritizedParts.sort(function (a, b) {
+      return a.priority - b.priority;
+    });
+    return prioritizedParts;
+  }
+
 
   /**
    * @ngdoc function
@@ -16678,18 +16778,20 @@ angular.module('pascalprecht.translate')
    * translation data, but only registers a part to be loaded in the future.
    *
    * @param {string} name A name of the part to add
+   * @param {int} [priority=0] Sets the load priority of this part.
+   *
    * @returns {object} $translatePartialLoaderProvider, so this method is chainable
    * @throws {TypeError} The method could throw a **TypeError** if you pass the param
    * of the wrong type. Please, note that the `name` param has to be a
    * non-empty **string**.
    */
-  this.addPart = function(name) {
+  this.addPart = function(name, priority) {
     if (!isStringValid(name)) {
       throw new TypeError('Couldn\'t add part, part name has to be a string!');
     }
 
     if (!hasPart(name)) {
-      parts[name] = new Part(name);
+      parts[name] = new Part(name, priority);
     }
     parts[name].isActive = true;
 
@@ -16832,40 +16934,28 @@ angular.module('pascalprecht.translate')
       }
 
       var loaders = [],
-          tables = [],
-          deferred = $q.defer();
+          deferred = $q.defer(),
+          prioritizedParts = getPrioritizedParts();
 
-      function addTablePart(table) {
-        tables.push(table);
-      }
-
-      for (var part in parts) {
-        if (hasPart(part) && parts[part].isActive) {
-          loaders.push(
-            parts[part]
-              .getTable(options.key, $q, $http, options.$http, options.urlTemplate, errorHandler)
-              .then(addTablePart)
-          );
-          parts[part].urlTemplate = options.urlTemplate;
-        }
-      }
-
-      if (loaders.length) {
-        $q.all(loaders).then(
-          function() {
-            var table = {};
-            for (var i = 0; i < tables.length; i++) {
-              deepExtend(table, tables[i]);
-            }
-            deferred.resolve(table);
-          },
-          function() {
-            deferred.reject(options.key);
-          }
+      angular.forEach(prioritizedParts, function(part, index) {
+        loaders.push(
+          part.getTable(options.key, $q, $http, options.$http, options.urlTemplate, errorHandler)
         );
-      } else {
-        deferred.resolve({});
-      }
+        part.urlTemplate = options.urlTemplate;
+      });
+
+      $q.all(loaders).then(
+        function() {
+          var table = {};
+          angular.forEach(prioritizedParts, function(part) {
+            deepExtend(table, part.tables[options.key]);
+          });
+          deferred.resolve(table);
+        },
+        function() {
+          deferred.reject(options.key);
+        }
+      );
 
       return deferred.promise;
     };
@@ -16876,11 +16966,12 @@ angular.module('pascalprecht.translate')
      * @methodOf pascalprecht.translate.$translatePartialLoader
      *
      * @description
-     * Registers a new part of the translation table. This method does actually not perform any xhr
-     * requests to get a translation data. The new parts would be loaded from the server next time
-     * `angular-translate` asks to loader to loaded translations.
+     * Registers a new part of the translation table. This method does not actually perform any xhr
+     * requests to get translation data. The new parts will be loaded in order of priority from the server next time
+     * `angular-translate` asks the loader to load translations.
      *
      * @param {string} name A name of the part to add
+     * @param {int} [priority=0] Sets the load priority of this part.
      *
      * @returns {object} $translatePartialLoader, so this method is chainable
      *
@@ -16892,13 +16983,13 @@ angular.module('pascalprecht.translate')
      * @throws {TypeError} The method could throw a **TypeError** if you pass the param of the wrong
      * type. Please, note that the `name` param has to be a non-empty **string**.
      */
-    service.addPart = function(name) {
+    service.addPart = function(name, priority) {
       if (!isStringValid(name)) {
         throw new TypeError('Couldn\'t add part, first arg has to be a string');
       }
 
       if (!hasPart(name)) {
-        parts[name] = new Part(name);
+        parts[name] = new Part(name, priority);
         $rootScope.$emit('$translatePartialLoaderStructureChanged', name);
       } else if (!parts[name].isActive) {
         parts[name].isActive = true;
@@ -16975,6 +17066,48 @@ angular.module('pascalprecht.translate')
 
       return service;
     };
+
+    /**
+     * @ngdoc function
+     * @name pascalprecht.translate.$translatePartialLoader#isPartLoaded
+     * @methodOf pascalprecht.translate.$translatePartialLoader
+     *
+     * @description
+     * Checks if the registered translation part is loaded into the translation table.
+     *
+     * @param {string} name A name of the part
+     * @param {string} lang A key of the language
+     *
+     * @returns {boolean} Returns **true** if the translation of the part is loaded to the translation table and **false** if not.
+     *
+     * @throws {TypeError} The method could throw a **TypeError** if you pass the param of the wrong
+     * type. Please, note that the `name` and `lang` params have to be non-empty **string**.
+     */
+    service.isPartLoaded = function(name, lang) {
+      return angular.isDefined(parts[name]) && angular.isDefined(parts[name].tables[lang]);
+    };
+
+    /**
+     * @ngdoc function
+     * @name pascalprecht.translate.$translatePartialLoader#getRegisteredParts
+     * @methodOf pascalprecht.translate.$translatePartialLoader
+     *
+     * @description
+     * Gets names of the parts that were added with the `addPart`.
+     *
+     * @returns {array} Returns array of registered parts, if none were registered then an empty array is returned.
+     */
+    service.getRegisteredParts = function() {
+      var registeredParts = [];
+      angular.forEach(parts, function(p){
+        if(p.isActive) {
+          registeredParts.push(p.name);
+        }
+      });
+      return registeredParts;
+    };
+
+
 
     /**
      * @ngdoc function
@@ -27252,28 +27385,29 @@ var app = angular.module('ngTable', []);
  * @license New BSD License <http://creativecommons.org/licenses/BSD/>
  */
 
- /**
+/**
  * @ngdoc value
  * @name ngTable.value:ngTableDefaultParams
  * @description Default Parameters for ngTable
  */
-app.value('ngTableDefaults',{
+app.value('ngTableDefaults', {
     params: {},
     settings: {}
 });
 
 /**
  * @ngdoc service
- * @name ngTable.factory:ngTableParams
+ * @name ngTable.factory:NgTableParams
  * @description Parameters manager for ngTable
  */
-app.factory('ngTableParams', ['$q', '$log', 'ngTableDefaults', function ($q, $log, ngTableDefaults) {
-    var isNumber = function (n) {
+
+app.factory('NgTableParams', ['$q', '$log', 'ngTableDefaults', function($q, $log, ngTableDefaults) {
+    var isNumber = function(n) {
         return !isNaN(parseFloat(n)) && isFinite(n);
     };
-    var ngTableParams = function (baseParameters, baseSettings) {
+    var NgTableParams = function(baseParameters, baseSettings) {
         var self = this,
-            log = function () {
+            log = function() {
                 if (settings.debugMode && $log.debug) {
                     $log.debug.apply(this, arguments);
                 }
@@ -27283,15 +27417,15 @@ app.factory('ngTableParams', ['$q', '$log', 'ngTableDefaults', function ($q, $lo
 
         /**
          * @ngdoc method
-         * @name ngTable.factory:ngTableParams#parameters
-         * @methodOf ngTable.factory:ngTableParams
+         * @name ngTable.factory:NgTableParams#parameters
+         * @methodOf ngTable.factory:NgTableParams
          * @description Set new parameters or get current parameters
          *
          * @param {string} newParameters      New parameters
          * @param {string} parseParamsFromUrl Flag if parse parameters like in url
          * @returns {Object} Current parameters or `this`
          */
-        this.parameters = function (newParameters, parseParamsFromUrl) {
+        this.parameters = function(newParameters, parseParamsFromUrl) {
             parseParamsFromUrl = parseParamsFromUrl || false;
             if (angular.isDefined(newParameters)) {
                 for (var key in newParameters) {
@@ -27323,14 +27457,14 @@ app.factory('ngTableParams', ['$q', '$log', 'ngTableDefaults', function ($q, $lo
 
         /**
          * @ngdoc method
-         * @name ngTable.factory:ngTableParams#settings
-         * @methodOf ngTable.factory:ngTableParams
+         * @name ngTable.factory:NgTableParams#settings
+         * @methodOf ngTable.factory:NgTableParams
          * @description Set new settings for table
          *
          * @param {string} newSettings New settings or undefined
          * @returns {Object} Current settings or `this`
          */
-        this.settings = function (newSettings) {
+        this.settings = function(newSettings) {
             if (angular.isDefined(newSettings)) {
                 if (angular.isArray(newSettings.data)) {
                     //auto-set the total from passed in data
@@ -27345,99 +27479,113 @@ app.factory('ngTableParams', ['$q', '$log', 'ngTableDefaults', function ($q, $lo
 
         /**
          * @ngdoc method
-         * @name ngTable.factory:ngTableParams#page
-         * @methodOf ngTable.factory:ngTableParams
+         * @name ngTable.factory:NgTableParams#page
+         * @methodOf ngTable.factory:NgTableParams
          * @description If parameter page not set return current page else set current page
          *
          * @param {string} page Page number
          * @returns {Object|Number} Current page or `this`
          */
-        this.page = function (page) {
-            return angular.isDefined(page) ? this.parameters({'page': page}) : params.page;
+        this.page = function(page) {
+            return angular.isDefined(page) ? this.parameters({
+                'page': page
+            }) : params.page;
         };
 
         /**
          * @ngdoc method
-         * @name ngTable.factory:ngTableParams#total
-         * @methodOf ngTable.factory:ngTableParams
+         * @name ngTable.factory:NgTableParams#total
+         * @methodOf ngTable.factory:NgTableParams
          * @description If parameter total not set return current quantity else set quantity
          *
          * @param {string} total Total quantity of items
          * @returns {Object|Number} Current page or `this`
          */
-        this.total = function (total) {
-            return angular.isDefined(total) ? this.settings({'total': total}) : settings.total;
+        this.total = function(total) {
+            return angular.isDefined(total) ? this.settings({
+                'total': total
+            }) : settings.total;
         };
 
         /**
          * @ngdoc method
-         * @name ngTable.factory:ngTableParams#count
-         * @methodOf ngTable.factory:ngTableParams
+         * @name ngTable.factory:NgTableParams#count
+         * @methodOf ngTable.factory:NgTableParams
          * @description If parameter count not set return current count per page else set count per page
          *
          * @param {string} count Count per number
          * @returns {Object|Number} Count per page or `this`
          */
-        this.count = function (count) {
+        this.count = function(count) {
             // reset to first page because can be blank page
-            return angular.isDefined(count) ? this.parameters({'count': count, 'page': 1}) : params.count;
+            return angular.isDefined(count) ? this.parameters({
+                'count': count,
+                'page': 1
+            }) : params.count;
         };
 
         /**
          * @ngdoc method
-         * @name ngTable.factory:ngTableParams#filter
-         * @methodOf ngTable.factory:ngTableParams
+         * @name ngTable.factory:NgTableParams#filter
+         * @methodOf ngTable.factory:NgTableParams
          * @description If parameter page not set return current filter else set current filter
          *
          * @param {string} filter New filter
          * @returns {Object} Current filter or `this`
          */
-        this.filter = function (filter) {
-            return angular.isDefined(filter) ? this.parameters({'filter': filter, 'page': 1}) : params.filter;
+        this.filter = function(filter) {
+            return angular.isDefined(filter) ? this.parameters({
+                'filter': filter,
+                'page': 1
+            }) : params.filter;
         };
 
         /**
          * @ngdoc method
-         * @name ngTable.factory:ngTableParams#sorting
-         * @methodOf ngTable.factory:ngTableParams
+         * @name ngTable.factory:NgTableParams#sorting
+         * @methodOf ngTable.factory:NgTableParams
          * @description If 'sorting' parameter is not set, return current sorting. Otherwise set current sorting.
          *
          * @param {string} sorting New sorting
          * @returns {Object} Current sorting or `this`
          */
-        this.sorting = function (sorting) {
+        this.sorting = function(sorting) {
             if (arguments.length == 2) {
                 var sortArray = {};
                 sortArray[sorting] = arguments[1];
-                this.parameters({'sorting': sortArray});
+                this.parameters({
+                    'sorting': sortArray
+                });
                 return this;
             }
-            return angular.isDefined(sorting) ? this.parameters({'sorting': sorting}) : params.sorting;
+            return angular.isDefined(sorting) ? this.parameters({
+                'sorting': sorting
+            }) : params.sorting;
         };
 
         /**
          * @ngdoc method
-         * @name ngTable.factory:ngTableParams#isSortBy
-         * @methodOf ngTable.factory:ngTableParams
+         * @name ngTable.factory:NgTableParams#isSortBy
+         * @methodOf ngTable.factory:NgTableParams
          * @description Checks sort field
          *
          * @param {string} field     Field name
          * @param {string} direction Direction of sorting 'asc' or 'desc'
          * @returns {Array} Return true if field sorted by direction
          */
-        this.isSortBy = function (field, direction) {
+        this.isSortBy = function(field, direction) {
             return angular.isDefined(params.sorting[field]) && angular.equals(params.sorting[field], direction);
         };
 
         /**
          * @ngdoc method
-         * @name ngTable.factory:ngTableParams#orderBy
-         * @methodOf ngTable.factory:ngTableParams
+         * @name ngTable.factory:NgTableParams#orderBy
+         * @methodOf ngTable.factory:NgTableParams
          * @description Return object of sorting parameters for angular filter
          *
          * @returns {Array} Array like: [ '-name', '+age' ]
          */
-        this.orderBy = function () {
+        this.orderBy = function() {
             var sorting = [];
             for (var column in params.sorting) {
                 sorting.push((params.sorting[column] === "asc" ? "+" : "-") + column);
@@ -27447,14 +27595,14 @@ app.factory('ngTableParams', ['$q', '$log', 'ngTableDefaults', function ($q, $lo
 
         /**
          * @ngdoc method
-         * @name ngTable.factory:ngTableParams#getData
-         * @methodOf ngTable.factory:ngTableParams
+         * @name ngTable.factory:NgTableParams#getData
+         * @methodOf ngTable.factory:NgTableParams
          * @description Called when updated some of parameters for get new data
          *
          * @param {Object} $defer promise object
          * @param {Object} params New parameters
          */
-        this.getData = function ($defer, params) {
+        this.getData = function($defer, params) {
             if (angular.isArray(this.data) && angular.isObject(params)) {
                 $defer.resolve(this.data.slice((params.page() - 1) * params.count(), params.page() * params.count()));
             } else {
@@ -27465,16 +27613,16 @@ app.factory('ngTableParams', ['$q', '$log', 'ngTableDefaults', function ($q, $lo
 
         /**
          * @ngdoc method
-         * @name ngTable.factory:ngTableParams#getGroups
-         * @methodOf ngTable.factory:ngTableParams
+         * @name ngTable.factory:NgTableParams#getGroups
+         * @methodOf ngTable.factory:NgTableParams
          * @description Return groups for table grouping
          */
-        this.getGroups = function ($defer, column) {
+        this.getGroups = function($defer, column) {
             var defer = $q.defer();
 
-            defer.promise.then(function (data) {
+            defer.promise.then(function(data) {
                 var groups = {};
-                angular.forEach(data, function (item) {
+                angular.forEach(data, function(item) {
                     var groupName = angular.isFunction(column) ? column(item) : item[column];
 
                     groups[groupName] = groups[groupName] || {
@@ -27495,8 +27643,8 @@ app.factory('ngTableParams', ['$q', '$log', 'ngTableDefaults', function ($q, $lo
 
         /**
          * @ngdoc method
-         * @name ngTable.factory:ngTableParams#generatePagesArray
-         * @methodOf ngTable.factory:ngTableParams
+         * @name ngTable.factory:NgTableParams#generatePagesArray
+         * @methodOf ngTable.factory:NgTableParams
          * @description Generate array of pages
          *
          * @param {boolean} currentPage which page must be active
@@ -27504,7 +27652,7 @@ app.factory('ngTableParams', ['$q', '$log', 'ngTableDefaults', function ($q, $lo
          * @param {boolean} pageSize    Quantity of items on page
          * @returns {Array} Array of pages
          */
-        this.generatePagesArray = function (currentPage, totalItems, pageSize) {
+        this.generatePagesArray = function(currentPage, totalItems, pageSize) {
             var maxBlocks, maxPage, maxPivotPages, minPage, numPages, pages;
             maxBlocks = 11;
             pages = [];
@@ -27559,14 +27707,14 @@ app.factory('ngTableParams', ['$q', '$log', 'ngTableDefaults', function ($q, $lo
 
         /**
          * @ngdoc method
-         * @name ngTable.factory:ngTableParams#url
-         * @methodOf ngTable.factory:ngTableParams
+         * @name ngTable.factory:NgTableParams#url
+         * @methodOf ngTable.factory:NgTableParams
          * @description Return groups for table grouping
          *
          * @param {boolean} asString flag indicates return array of string or object
          * @returns {Array} If asString = true will be return array of url string parameters else key-value object
          */
-        this.url = function (asString) {
+        this.url = function(asString) {
             asString = asString || false;
             var pairs = (asString ? [] : {});
             for (var key in params) {
@@ -27598,11 +27746,11 @@ app.factory('ngTableParams', ['$q', '$log', 'ngTableDefaults', function ($q, $lo
 
         /**
          * @ngdoc method
-         * @name ngTable.factory:ngTableParams#reload
-         * @methodOf ngTable.factory:ngTableParams
+         * @name ngTable.factory:NgTableParams#reload
+         * @methodOf ngTable.factory:NgTableParams
          * @description Reload table data
          */
-        this.reload = function () {
+        this.reload = function() {
             var $defer = $q.defer(),
                 self = this,
                 pData = null;
@@ -27624,7 +27772,7 @@ app.factory('ngTableParams', ['$q', '$log', 'ngTableDefaults', function ($q, $lo
                 //   create a promise from the $defer. We need to return a promise.
                 pData = $defer.promise;
             }
-            return pData.then(function (data) {
+            return pData.then(function(data) {
                 settings.$loading = false;
                 log('ngTable: current scope', settings.$scope);
                 if (settings.groupBy) {
@@ -27640,7 +27788,7 @@ app.factory('ngTableParams', ['$q', '$log', 'ngTableDefaults', function ($q, $lo
             });
         };
 
-        this.reloadPages = function () {
+        this.reloadPages = function() {
             var self = this;
             settings.$scope.pages = self.generatePagesArray(self.page(), self.total(), self.count());
         };
@@ -27672,9 +27820,17 @@ app.factory('ngTableParams', ['$q', '$log', 'ngTableDefaults', function ($q, $lo
         this.parameters(baseParameters, true);
         return this;
     };
-    return ngTableParams;
+    return NgTableParams;
 }]);
 
+/**
+ * @ngdoc service
+ * @name ngTable.factory:ngTableParams
+ * @description Backwards compatible shim for lowercase 'n' in NgTableParams
+ */
+app.factory('ngTableParams', ['NgTableParams', function(NgTableParams) {
+    return NgTableParams;
+}]);
 /**
  * ngTable: Table + Angular JS
  *
@@ -27690,19 +27846,25 @@ app.factory('ngTableParams', ['$q', '$log', 'ngTableDefaults', function ($q, $lo
  * @description
  * Each {@link ngTable.directive:ngTable ngTable} directive creates an instance of `ngTableController`
  */
-var ngTableController = ['$scope', 'ngTableParams', '$timeout', function ($scope, ngTableParams, $timeout) {
+app.controller('ngTableController', ['$scope', 'NgTableParams', '$timeout', '$parse', '$compile', '$attrs', '$element',
+    'ngTableColumn',
+function($scope, NgTableParams, $timeout, $parse, $compile, $attrs, $element, ngTableColumn) {
     var isFirstTimeLoad = true;
+    $scope.$filterRow = {};
     $scope.$loading = false;
 
+    // until such times as the directive uses an isolated scope, we need to ensure that the check for
+    // the params field only consults the "own properties" of the $scope. This is to avoid seeing the params
+    // field on a $scope higher up in the prototype chain
     if (!$scope.hasOwnProperty("params")) {
-        $scope.params = new ngTableParams();
+        $scope.params = new NgTableParams();
         $scope.params.isNullInstance = true;
     }
     $scope.params.settings().$scope = $scope;
 
-    var delayFilter = (function () {
+    var delayFilter = (function() {
         var timer = 0;
-        return function (callback, ms) {
+        return function(callback, ms) {
             $timeout.cancel(timer);
             timer = $timeout(callback, ms);
         };
@@ -27712,7 +27874,7 @@ var ngTableController = ['$scope', 'ngTableParams', '$timeout', function ($scope
         $scope.params.$params.page = 1;
     }
 
-    $scope.$watch('params.$params', function (newParams, oldParams) {
+    $scope.$watch('params.$params', function(newParams, oldParams) {
 
         if (newParams === oldParams) {
             return;
@@ -27722,7 +27884,7 @@ var ngTableController = ['$scope', 'ngTableParams', '$timeout', function ($scope
 
         if (!angular.equals(newParams.filter, oldParams.filter)) {
             var maybeResetPage = isFirstTimeLoad ? angular.noop : resetPage;
-            delayFilter(function () {
+            delayFilter(function() {
                 maybeResetPage();
                 $scope.params.reload();
             }, $scope.params.settings().filterDelay);
@@ -27736,8 +27898,101 @@ var ngTableController = ['$scope', 'ngTableParams', '$timeout', function ($scope
 
     }, true);
 
-    $scope.sortBy = function (column, event) {
-        var parsedSortable = $scope.parse(column.sortable);
+    this.compileDirectiveTemplates = function () {
+        if (!$element.hasClass('ng-table')) {
+            $scope.templates = {
+                header: ($attrs.templateHeader ? $attrs.templateHeader : 'ng-table/header.html'),
+                pagination: ($attrs.templatePagination ? $attrs.templatePagination : 'ng-table/pager.html')
+            };
+            $element.addClass('ng-table');
+            var headerTemplate = null;
+            if ($element.find('> thead').length === 0) {
+                headerTemplate = angular.element(document.createElement('thead')).attr('ng-include', 'templates.header');
+                $element.prepend(headerTemplate);
+            }
+            var paginationTemplate = angular.element(document.createElement('div')).attr({
+                'ng-table-pagination': 'params',
+                'template-url': 'templates.pagination'
+            });
+            $element.after(paginationTemplate);
+            if (headerTemplate) {
+                $compile(headerTemplate)($scope);
+            }
+            $compile(paginationTemplate)($scope);
+        }
+    };
+
+    this.loadFilterData = function ($columns) {
+        angular.forEach($columns, function ($column) {
+            var def;
+            def = $column.filterData($scope, {
+                $column: $column
+            });
+            if (!def) {
+                delete $column.filterData;
+                return;
+            }
+
+            // if we're working with a deferred object, let's wait for the promise
+            if ((angular.isObject(def) && angular.isObject(def.promise))) {
+                delete $column.filterData;
+                return def.promise.then(function(data) {
+                    // our deferred can eventually return arrays, functions and objects
+                    if (!angular.isArray(data) && !angular.isFunction(data) && !angular.isObject(data)) {
+                        // if none of the above was found - we just want an empty array
+                        data = [];
+                    } else if (angular.isArray(data)) {
+                        data.unshift({
+                            title: '-',
+                            id: ''
+                        });
+                    }
+                    $column.data = data;
+                });
+            }
+            // otherwise, we just return what the user gave us. It could be a function, array, object, whatever
+            else {
+                return $column.data = def;
+            }
+        });
+    };
+
+    this.buildColumns = function (columns) {
+        return columns.map(function(col){
+            return ngTableColumn.buildColumn(col, $scope)
+        })
+    };
+
+    this.setupBindingsToInternalScope = function(tableParamsExpr){
+
+        // note: this we're setting up watches to simulate angular's isolated scope bindings
+
+        // note: is REALLY important to watch for a change to the ngTableParams *reference* rather than
+        // $watch for value equivalence. This is because ngTableParams references the current page of data as
+        // a field and it's important not to watch this
+        var tableParamsGetter = $parse(tableParamsExpr);
+        $scope.$watch(tableParamsGetter, (function (params) {
+            if (angular.isUndefined(params)) {
+                return;
+            }
+            $scope.paramsModel = tableParamsGetter;
+            $scope.params = params;
+        }), false);
+
+        if ($attrs.showFilter) {
+            $scope.$parent.$watch($attrs.showFilter, function(value) {
+                $scope.show_filter = value;
+            });
+        }
+        if ($attrs.disableFilter) {
+            $scope.$parent.$watch($attrs.disableFilter, function(value) {
+                $scope.$filterRow.disabled = value;
+            });
+        }
+    };
+
+    $scope.sortBy = function($column, event) {
+        var parsedSortable = $column.sortable && $column.sortable();
         if (!parsedSortable) {
             return;
         }
@@ -27750,8 +28005,77 @@ var ngTableController = ['$scope', 'ngTableParams', '$timeout', function ($scope
             sorting: sortingParams
         });
     };
-}];
+}]);
 
+
+/**
+ * @ngdoc service
+ * @name ngTable.factory:ngTableColumn
+ *
+ * @description
+ * Service to construct a $column definition used by {@link ngTable.directive:ngTable ngTable} directive
+ */
+app.factory('ngTableColumn', [function () {
+
+    var defaults = {
+        'class': function(){ return ''; },
+        filter: function(){ return false; },
+        filterData: angular.noop,
+        headerTemplateURL: function(){ return false; },
+        headerTitle: function(){ return ' '; },
+        sortable: function(){ return false; },
+        show: function(){ return true; },
+        title: function(){ return ' '; },
+        titleAlt: function(){ return ''; }
+    };
+
+    /**
+     * @ngdoc method
+     * @name ngTable.factory:ngTableColumn#buildColumn
+     * @methodOf ngTable.factory:ngTableColumn
+     * @description Creates a $column for use within a header template
+     *
+     * @param {Object} column an existing $column or simple column data object
+     * @param {Scope} defaultScope the $scope to supply to the $column getter methods when not supplied by caller
+     * @returns {Object} a $column object
+     */
+    function buildColumn(column, defaultScope){
+        // note: we're not modifying the original column object. This helps to avoid unintended side affects
+        var extendedCol = Object.create(column);
+        for (var prop in defaults) {
+            if (extendedCol[prop] === undefined) {
+                extendedCol[prop] = defaults[prop];
+            }
+            if(!angular.isFunction(extendedCol[prop])){
+                // wrap raw field values with "getter" functions
+                // - this is to ensure consistency with how ngTable.compile builds columns
+                // - note that the original column object is being "proxied"; this is important
+                //   as it ensure that any changes to the original object will be returned by the "getter"
+                (function(prop1){
+                    extendedCol[prop1] = function(){
+                        return column[prop1];
+                    };
+                })(prop);
+            }
+            (function(prop1){
+                // satisfy the arguments expected by the function returned by parsedAttribute in the ngTable directive
+                var getterFn = extendedCol[prop1];
+                extendedCol[prop1] = function(){
+                    if (arguments.length === 0){
+                        return getterFn.call(column, defaultScope);
+                    } else {
+                        return getterFn.apply(column, arguments);
+                    }
+                };
+            })(prop);
+        }
+        return extendedCol;
+    }
+
+    return {
+        buildColumn: buildColumn
+    };
+}]);
 /**
  * ngTable: Table + Angular JS
  *
@@ -27768,23 +28092,22 @@ var ngTableController = ['$scope', 'ngTableParams', '$timeout', function ($scope
  * @description
  * Directive that instantiates {@link ngTable.directive:ngTable.ngTableController ngTableController}.
  */
-app.directive('ngTable', ['$compile', '$q', '$parse',
-    function ($compile, $q, $parse) {
+app.directive('ngTable', ['$q', '$parse',
+    function($q, $parse) {
         
 
         return {
             restrict: 'A',
             priority: 1001,
             scope: true,
-            controller: ngTableController,
-            compile: function (element) {
-                var columns = [], i = 0, row = null;
-
-                // custom header
-                var thead = element.find('thead');
+            controller: 'ngTableController',
+            compile: function(element) {
+                var columns = [],
+                    i = 0,
+                    row = null;
 
                 // IE 8 fix :not(.ng-table-group) selector
-                angular.forEach(angular.element(element.find('tr')), function (tr) {
+                angular.forEach(angular.element(element.find('tr')), function(tr) {
                     tr = angular.element(tr);
                     if (!tr.hasClass('ng-table-group') && !row) {
                         row = tr;
@@ -27793,134 +28116,132 @@ app.directive('ngTable', ['$compile', '$q', '$parse',
                 if (!row) {
                     return;
                 }
-                angular.forEach(row.find('td'), function (item) {
+                angular.forEach(row.find('td'), function(item) {
                     var el = angular.element(item);
                     if (el.attr('ignore-cell') && 'true' === el.attr('ignore-cell')) {
                         return;
                     }
-                    var parsedAttribute = function (attr, defaultValue) {
-                        return function (scope) {
-                            return $parse(el.attr('x-data-' + attr) || el.attr('data-' + attr) || el.attr(attr))(scope, {
+
+                    var getAttrValue = function(attr){
+                        return el.attr('x-data-' + attr) || el.attr('data-' + attr) || el.attr(attr);
+                    };
+
+                    var parsedAttribute = function(attr) {
+                        var expr = getAttrValue(attr);
+                        if (!expr){
+                            return undefined;
+                        }
+                        return function(scope, locals) {
+                            return $parse(expr)(scope, angular.extend(locals || {}, {
                                 $columns: columns
-                            }) || defaultValue;
+                            }));
                         };
                     };
 
-                    var parsedTitle = parsedAttribute('title', ' '),
-                        headerTemplateURL = parsedAttribute('header', false),
-                        filter = parsedAttribute('filter', false)(),
-                        filterTemplateURL = false,
-                        filterName = false;
-
-                    if (filter && filter.$$name) {
-                        filterName = filter.$$name;
-                        delete filter.$$name;
+                    var titleExpr = getAttrValue('title-alt') || getAttrValue('title');
+                    if (titleExpr){
+                        el.attr('data-title-text', '{{' + titleExpr + '}}'); // this used in responsive table
                     }
-                    if (filter && filter.templateURL) {
-                        filterTemplateURL = filter.templateURL;
-                        delete filter.templateURL;
-                    }
-
-                    el.attr('data-title-text', parsedTitle()); // this used in responsive table
+                    // NOTE TO MAINTAINERS: if you add extra fields to a $column be sure to extend ngTableColumn with
+                    // a corresponding "safe" default
                     columns.push({
                         id: i++,
-                        title: parsedTitle,
-                        sortable: parsedAttribute('sortable', false),
-                        'class': el.attr('x-data-header-class') || el.attr('data-header-class') || el.attr('header-class'),
-                        filter: filter,
-                        filterTemplateURL: filterTemplateURL,
-                        filterName: filterName,
-                        headerTemplateURL: headerTemplateURL,
-                        filterData: (el.attr("filter-data") ? el.attr("filter-data") : null),
+                        title: parsedAttribute('title'),
+                        titleAlt: parsedAttribute('title-alt'),
+                        headerTitle: parsedAttribute('header-title'),
+                        sortable: parsedAttribute('sortable'),
+                        'class': parsedAttribute('header-class'),
+                        filter: parsedAttribute('filter'),
+                        headerTemplateURL: parsedAttribute('header'),
+                        filterData: parsedAttribute('filter-data'),
                         show: (el.attr("ng-show") ? function (scope) {
                             return $parse(el.attr("ng-show"))(scope);
-                        } : function () {
-                            return true;
-                        })
+                        } : undefined)
                     });
                 });
-                return function (scope, element, attrs) {
-                    scope.$loading = false;
-                    scope.$columns = columns;
-                    scope.$filterRow = {};
+                return function(scope, element, attrs, controller) {
+                    scope.$columns = columns = controller.buildColumns(columns);
 
-                    scope.$watch(attrs.ngTable, (function (params) {
-                        if (angular.isUndefined(params)) {
-                            return;
-                        }
-                        scope.paramsModel = $parse(attrs.ngTable);
-                        scope.params = params;
-                    }), true);
-                    scope.parse = function (text) {
-                        return angular.isDefined(text) ? text(scope) : '';
-                    };
-                    if (attrs.showFilter) {
-                        scope.$parent.$watch(attrs.showFilter, function (value) {
-                            scope.show_filter = value;
-                        });
-                    }
-                    if (attrs.disableFilter) {
-                        scope.$parent.$watch(attrs.disableFilter, function (value) {
-                            scope.$filterRow.disabled = value;
-                        });
-                    }
-                    angular.forEach(columns, function (column) {
-                        var def;
-                        if (!column.filterData) {
-                            return;
-                        }
-                        def = $parse(column.filterData)(scope, {
-                            $column: column
-                        });
-                        // if we're working with a deferred object, let's wait for the promise
-                        if((angular.isObject(def) && angular.isObject(def.promise))){
-                            delete column.filterData;
-                            return def.promise.then(function (data) {
-                                // our deferred can eventually return arrays, functions and objects
-                                if (!angular.isArray(data) && !angular.isFunction(data) && !angular.isObject(data)) {
-                                    // if none of the above was found - we just want an empty array
-                                    data = [];
-                                }
-                                else if(angular.isArray(data)) {
-                                    data.unshift({
-                                        title: '-',
-                                        id: ''
-                                    });
-                                }
-                                column.data = data;
-                            });
-                        }
-                        // otherwise, we just return what the user gave us. It could be a function, array, object, whatever
-                        else {
-                            return column.data = def;
-                        }
-                    });
-                    if (!element.hasClass('ng-table')) {
-                        scope.templates = {
-                            header: (attrs.templateHeader ? attrs.templateHeader : 'ng-table/header.html'),
-                            pagination: (attrs.templatePagination ? attrs.templatePagination : 'ng-table/pager.html')
-                        };
-                        var headerTemplate = thead.length > 0 ? thead : angular.element(document.createElement('thead')).attr('ng-include', 'templates.header');
-                        var paginationTemplate = angular.element(document.createElement('div')).attr({
-                            'ng-table-pagination': 'params',
-                            'template-url': 'templates.pagination'
-                        });
-
-                        element.find('thead').remove();
-
-                        element.addClass('ng-table')
-                            .prepend(headerTemplate)
-                            .after(paginationTemplate);
-
-                        $compile(headerTemplate)(scope);
-                        $compile(paginationTemplate)(scope);
-                    }
+                    controller.setupBindingsToInternalScope(attrs.ngTable);
+                    controller.loadFilterData(columns);
+                    controller.compileDirectiveTemplates();
                 };
             }
         }
     }
 ]);
 
+/**
+ * @ngdoc directive
+ * @name ngTable.directive:ngTableDynamic
+ * @restrict A
+ *
+ * @description
+ * A dynamic version of the {@link ngTable.directive:ngTable ngTable} directive that accepts a dynamic list of columns
+ * definitions to render
+ */
+app.directive('ngTableDynamic', ['$parse', function ($parse){
+
+    function parseDirectiveExpression(attr) {
+        if (!attr || attr.indexOf(" with ") > -1) {
+            var parts = attr.split(/\s+with\s+/);
+            return {
+                tableParams: parts[0],
+                columns: parts[1]
+            };
+        } else {
+            throw new Error('Parse error (expected example: ng-table-dynamic=\'tableParams with cols\')');
+        }
+    }
+
+    return {
+        restrict: 'A',
+        priority: 1001,
+        scope: true,
+        controller: 'ngTableController',
+        compile: function(tElement) {
+            var row;
+
+            // IE 8 fix :not(.ng-table-group) selector
+            angular.forEach(angular.element(tElement.find('tr')), function(tr) {
+                tr = angular.element(tr);
+                if (!tr.hasClass('ng-table-group') && !row) {
+                    row = tr;
+                }
+            });
+            if (!row) {
+                return;
+            }
+
+            angular.forEach(row.find('td'), function(item) {
+                var el = angular.element(item);
+                var getAttrValue = function(attr){
+                    return el.attr('x-data-' + attr) || el.attr('data-' + attr) || el.attr(attr);
+                };
+
+                // this used in responsive table
+                var titleExpr = getAttrValue('title');
+                if (!titleExpr){
+                    el.attr('data-title-text', '{{$columns[$index].titleAlt(this) || $columns[$index].title(this)}}');
+                }
+                var showExpr = el.attr('ng-show');
+                if (!showExpr){
+                    el.attr('ng-show', '$columns[$index].show(this)');
+                }
+            });
+
+            return function(scope, element, attrs, controller) {
+                var expr = parseDirectiveExpression(attrs.ngTableDynamic);
+                var columns = $parse(expr.columns)(scope) || [];
+                scope.$columns = controller.buildColumns(columns);
+
+                controller.setupBindingsToInternalScope(expr.tableParams);
+                controller.loadFilterData(scope.$columns);
+                controller.compileDirectiveTemplates();
+            };
+        }
+    };
+}]);
 /**
  * ngTable: Table + Angular JS
  *
@@ -27935,7 +28256,7 @@ app.directive('ngTable', ['$compile', '$q', '$parse',
  * @restrict A
  */
 app.directive('ngTablePagination', ['$compile',
-    function ($compile) {
+    function($compile) {
         
 
         return {
@@ -27945,9 +28266,9 @@ app.directive('ngTablePagination', ['$compile',
                 'templateUrl': '='
             },
             replace: false,
-            link: function (scope, element, attrs) {
+            link: function(scope, element, attrs) {
 
-                scope.params.settings().$scope.$on('ngTableAfterReloadData', function () {
+                scope.params.settings().$scope.$on('ngTableAfterReloadData', function() {
                     scope.pages = scope.params.generatePagesArray(scope.params.page(), scope.params.total(), scope.params.count());
                 }, true);
 
@@ -27966,13 +28287,12 @@ app.directive('ngTablePagination', ['$compile',
         };
     }
 ]);
-
 angular.module('ngTable').run(['$templateCache', function ($templateCache) {
-	$templateCache.put('ng-table/filters/select-multiple.html', '<select ng-options="data.id as data.title for data in column.data" ng-disabled="$filterRow.disabled" multiple ng-multiple="true" ng-model="params.filter()[name]" ng-show="filter==\'select-multiple\'" class="filter filter-select-multiple form-control" name="{{column.filterName}}"> </select>');
-	$templateCache.put('ng-table/filters/select.html', '<select ng-options="data.id as data.title for data in column.data" ng-disabled="$filterRow.disabled" ng-model="params.filter()[name]" ng-show="filter==\'select\'" class="filter filter-select form-control" name="{{column.filterName}}"> </select>');
-	$templateCache.put('ng-table/filters/text.html', '<input type="text" name="{{column.filterName}}" ng-disabled="$filterRow.disabled" ng-model="params.filter()[name]" ng-if="filter==\'text\'" class="input-filter form-control"/>');
-	$templateCache.put('ng-table/header.html', '<tr> <th ng-repeat="column in $columns" ng-class="{ \'sortable\': parse(column.sortable), \'sort-asc\': params.sorting()[parse(column.sortable)]==\'asc\', \'sort-desc\': params.sorting()[parse(column.sortable)]==\'desc\' }" ng-click="sortBy(column, $event)" ng-show="column.show(this)" ng-init="template=column.headerTemplateURL(this)" class="header {{column.class}}"> <div ng-if="!template" ng-show="!template" ng-bind="parse(column.title)"></div> <div ng-if="template" ng-show="template" ng-include="template"></div> </th> </tr> <tr ng-show="show_filter" class="ng-table-filters"> <th ng-repeat="column in $columns" ng-show="column.show(this)" class="filter"> <div ng-repeat="(name, filter) in column.filter"> <div ng-if="column.filterTemplateURL" ng-show="column.filterTemplateURL"> <div ng-include="column.filterTemplateURL"></div> </div> <div ng-if="!column.filterTemplateURL" ng-show="!column.filterTemplateURL"> <div ng-include="\'ng-table/filters/\' + filter + \'.html\'"></div> </div> </div> </th> </tr> ');
-	$templateCache.put('ng-table/pager.html', '<div class="ng-cloak ng-table-pager"> <div ng-if="params.settings().counts.length" class="ng-table-counts btn-group pull-right"> <button ng-repeat="count in params.settings().counts" type="button" ng-class="{\'active\':params.count()==count}" ng-click="params.count(count)" class="btn btn-default"> <span ng-bind="count"></span> </button> </div> <ul class="pagination ng-table-pagination"> <li ng-class="{\'disabled\': !page.active && !page.current, \'active\': page.current}" ng-repeat="page in pages" ng-switch="page.type"> <a ng-switch-when="prev" ng-click="params.page(page.number)" href="">&laquo;</a> <a ng-switch-when="first" ng-click="params.page(page.number)" href=""><span ng-bind="page.number"></span></a> <a ng-switch-when="page" ng-click="params.page(page.number)" href=""><span ng-bind="page.number"></span></a> <a ng-switch-when="more" ng-click="params.page(page.number)" href="">&#8230;</a> <a ng-switch-when="last" ng-click="params.page(page.number)" href=""><span ng-bind="page.number"></span></a> <a ng-switch-when="next" ng-click="params.page(page.number)" href="">&raquo;</a> </li> </ul> </div> ');
+	$templateCache.put('ng-table/filters/select-multiple.html', '<select ng-options="data.id as data.title for data in $column.data" ng-disabled="$filterRow.disabled" multiple ng-multiple="true" ng-model="params.filter()[name]" ng-show="filter==\'select-multiple\'" class="filter filter-select-multiple form-control" name="{{name}}"> </select>');
+	$templateCache.put('ng-table/filters/select.html', '<select ng-options="data.id as data.title for data in $column.data" ng-disabled="$filterRow.disabled" ng-model="params.filter()[name]" ng-show="filter==\'select\'" class="filter filter-select form-control" name="{{name}}"> </select>');
+	$templateCache.put('ng-table/filters/text.html', '<input type="text" name="{{name}}" ng-disabled="$filterRow.disabled" ng-model="params.filter()[name]" ng-if="filter==\'text\'" class="input-filter form-control"/>');
+	$templateCache.put('ng-table/header.html', '<tr> <th title="{{$column.headerTitle(this)}}" ng-repeat="$column in $columns" ng-class="{ \'sortable\': $column.sortable(this), \'sort-asc\': params.sorting()[$column.sortable(this)]==\'asc\', \'sort-desc\': params.sorting()[$column.sortable(this)]==\'desc\' }" ng-click="sortBy($column, $event)" ng-show="$column.show(this)" ng-init="template=$column.headerTemplateURL(this)" class="header {{$column.class(this)}}"> <div ng-if="!template" ng-show="!template" ng-bind="$column.title(this)"></div> <div ng-if="template" ng-show="template" ng-include="template"></div> </th> </tr> <tr ng-show="show_filter" class="ng-table-filters"> <th data-title-text="{{$column.titleAlt(this) || $column.title(this)}}" ng-repeat="$column in $columns" ng-show="$column.show(this)" class="filter"> <div ng-repeat="(name, filter) in $column.filter(this)"> <div ng-if="filter.indexOf(\'/\') !==-1" ng-include="filter"></div> <div ng-if="filter.indexOf(\'/\')===-1" ng-include="\'ng-table/filters/\' + filter + \'.html\'"></div> </div> </th> </tr> ');
+	$templateCache.put('ng-table/pager.html', '<div class="ng-cloak ng-table-pager" ng-if="params.data.length"> <div ng-if="params.settings().counts.length" class="ng-table-counts btn-group pull-right"> <button ng-repeat="count in params.settings().counts" type="button" ng-class="{\'active\':params.count()==count}" ng-click="params.count(count)" class="btn btn-default"> <span ng-bind="count"></span> </button> </div> <ul class="pagination ng-table-pagination"> <li ng-class="{\'disabled\': !page.active && !page.current, \'active\': page.current}" ng-repeat="page in pages" ng-switch="page.type"> <a ng-switch-when="prev" ng-click="params.page(page.number)" href="">&laquo;</a> <a ng-switch-when="first" ng-click="params.page(page.number)" href=""><span ng-bind="page.number"></span></a> <a ng-switch-when="page" ng-click="params.page(page.number)" href=""><span ng-bind="page.number"></span></a> <a ng-switch-when="more" ng-click="params.page(page.number)" href="">&#8230;</a> <a ng-switch-when="last" ng-click="params.page(page.number)" href=""><span ng-bind="page.number"></span></a> <a ng-switch-when="next" ng-click="params.page(page.number)" href="">&raquo;</a> </li> </ul> </div> ');
 }]);
     return app;
 }));
@@ -56377,8 +56697,8 @@ angular.module('ui.router.tabs').directive('tabs', ['$rootScope', '$state',
             $state.go(route, params, options);
           };
 
-          $scope.active = function(route) {
-            var isAncestorOfCurrentRoute = $state.includes(route);
+          $scope.active = function(route, params, options) {
+            var isAncestorOfCurrentRoute = $state.includes(route, params, options);
             return isAncestorOfCurrentRoute;
           };
 
@@ -56386,9 +56706,9 @@ angular.module('ui.router.tabs').directive('tabs', ['$rootScope', '$state',
 
             // sets which tab is active (used for highlighting)
             angular.forEach($scope.tabs, function(tab) {
-              tab.active = $scope.active(tab.route);
               tab.params = tab.params || {};
               tab.options = tab.options || {};
+              tab.active = $scope.active(tab.route, tab.params, tab.options);
 
               if (tab.active) {
                 $scope.current_tab = tab;
@@ -56402,6 +56722,12 @@ angular.module('ui.router.tabs').directive('tabs', ['$rootScope', '$state',
           // if none are active, set the default
           $scope.current_tab = $scope.current_tab || $scope.tabs[0];
           $scope.go($scope.current_tab.route, $scope.current_tab.params, $scope.current_tab.options);
+
+          $scope.changeTab = function(tab) {
+            if (tab.route !== $scope.current_tab.route) {
+              $scope.go(tab.route, tab.params, tab.options);
+            }
+          };
     }],
       templateUrl: function(element, attributes) {
         return attributes.templateUrl || 'ui-router-tabs-default-template.html';
@@ -56411,9 +56737,7 @@ angular.module('ui.router.tabs').directive('tabs', ['$rootScope', '$state',
   function($templateCache) {
     var DEFAULT_TEMPLATE = '<div>' +
       '<tabset class="tab-container" type="{{type}}" vertical="{{vertical}}" justified="{{justified}}">' +
-      '  <tab class="tab" ng-repeat="tab in tabs" heading="{{tab.heading}}" ui-sref="{{tab.route}}(tab.params)"' +
-      '    ui-sref-opts="{{tab.options}}" ng-click active="tab.active">' +
-      '  </tab>' +
+      '  <tab class="tab" ng-repeat="tab in tabs" heading="{{tab.heading}}" active="tab.active" ng-click="changeTab(tab)" />' +
       '</tabset>' +
       '</div>';
 

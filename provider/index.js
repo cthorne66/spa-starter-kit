@@ -458,18 +458,54 @@ define('provider/controllers/ProviderMapController',["../utils/gMaps", "../servi
   ($traceurRuntime.createClass)(ProviderMapController, {
     getBounds: function(providers) {
       var bounds = new gMaps.LatLngBounds();
-      for (var $__8 = providers[$traceurRuntime.toProperty(Symbol.iterator)](),
-          $__9 = void 0; !($__9 = $__8.next()).done; ) {
-        var provider = $__9.value;
-        {
-          for (var $__6 = provider.addresses[$traceurRuntime.toProperty(Symbol.iterator)](),
-              $__7 = void 0; !($__7 = $__6.next()).done; ) {
-            var address = $__7.value;
-            {
-              if (address.ADR_CANC_DT === '9999-12-31' && address.distance < PROVIDER_SEARCH_PARAMS.radius) {
-                bounds.extend(new gMaps.LatLng(address.LAT_NBR, address.LONG_NBR));
+      var $__16 = true;
+      var $__17 = false;
+      var $__18 = undefined;
+      try {
+        for (var $__14 = void 0,
+            $__13 = (providers)[$traceurRuntime.toProperty(Symbol.iterator)](); !($__16 = ($__14 = $__13.next()).done); $__16 = true) {
+          var provider = $__14.value;
+          {
+            var $__9 = true;
+            var $__10 = false;
+            var $__11 = undefined;
+            try {
+              for (var $__7 = void 0,
+                  $__6 = (provider.addresses)[$traceurRuntime.toProperty(Symbol.iterator)](); !($__9 = ($__7 = $__6.next()).done); $__9 = true) {
+                var address = $__7.value;
+                {
+                  if (address.ADR_CANC_DT === '9999-12-31' && address.distance < PROVIDER_SEARCH_PARAMS.radius) {
+                    bounds.extend(new gMaps.LatLng(address.LAT_NBR, address.LONG_NBR));
+                  }
+                }
+              }
+            } catch ($__12) {
+              $__10 = true;
+              $__11 = $__12;
+            } finally {
+              try {
+                if (!$__9 && $__6.return != null) {
+                  $__6.return();
+                }
+              } finally {
+                if ($__10) {
+                  throw $__11;
+                }
               }
             }
+          }
+        }
+      } catch ($__19) {
+        $__17 = true;
+        $__18 = $__19;
+      } finally {
+        try {
+          if (!$__16 && $__13.return != null) {
+            $__13.return();
+          }
+        } finally {
+          if ($__17) {
+            throw $__18;
           }
         }
       }

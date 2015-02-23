@@ -30,19 +30,37 @@ define('diary/diary',[], function() {
   };
   var $Diary = Diary;
   ($traceurRuntime.createClass)(Diary, {log: function(level, group, message) {
-      for (var $__1 = $Diary.reporters[$traceurRuntime.toProperty(Symbol.iterator)](),
-          $__2 = void 0; !($__2 = $__1.next()).done; ) {
-        var target = $__2.value;
-        {
-          var $__3 = target,
-              config = $__3.config,
-              reporter = $__3.reporter;
-          if ((config.level.indexOf('*') !== -1 || config.level.indexOf(level) !== -1) && (config.group.indexOf('*') !== -1 || config.group.indexOf(group) !== -1)) {
-            reporter.receive({
-              level: level,
-              group: group,
-              message: message
-            });
+      var $__4 = true;
+      var $__5 = false;
+      var $__6 = undefined;
+      try {
+        for (var $__2 = void 0,
+            $__1 = ($Diary.reporters)[$traceurRuntime.toProperty(Symbol.iterator)](); !($__4 = ($__2 = $__1.next()).done); $__4 = true) {
+          var target = $__2.value;
+          {
+            var $__8 = target,
+                config = $__8.config,
+                reporter = $__8.reporter;
+            if ((config.level.indexOf('*') !== -1 || config.level.indexOf(level) !== -1) && (config.group.indexOf('*') !== -1 || config.group.indexOf(group) !== -1)) {
+              reporter.receive({
+                level: level,
+                group: group,
+                message: message
+              });
+            }
+          }
+        }
+      } catch ($__7) {
+        $__5 = true;
+        $__6 = $__7;
+      } finally {
+        try {
+          if (!$__4 && $__1.return != null) {
+            $__1.return();
+          }
+        } finally {
+          if ($__5) {
+            throw $__6;
           }
         }
       }
@@ -71,14 +89,32 @@ define('diary/diary',[], function() {
     }
   });
   var reporters = [];
-  for (var $__1 = ['info', 'warn', 'fatal', 'error'][$traceurRuntime.toProperty(Symbol.iterator)](),
-      $__2 = void 0; !($__2 = $__1.next()).done; ) {
-    var level = $__2.value;
-    (function(level) {
-      Diary.prototype[level] = function(message) {
-        this.log(level, this.group, message);
-      };
-    })(level);
+  var $__4 = true;
+  var $__5 = false;
+  var $__6 = undefined;
+  try {
+    for (var $__2 = void 0,
+        $__1 = (['info', 'warn', 'fatal', 'error'])[$traceurRuntime.toProperty(Symbol.iterator)](); !($__4 = ($__2 = $__1.next()).done); $__4 = true) {
+      var level = $__2.value;
+      (function(level) {
+        Diary.prototype[level] = function(message) {
+          this.log(level, this.group, message);
+        };
+      })(level);
+    }
+  } catch ($__7) {
+    $__5 = true;
+    $__6 = $__7;
+  } finally {
+    try {
+      if (!$__4 && $__1.return != null) {
+        $__1.return();
+      }
+    } finally {
+      if ($__5) {
+        throw $__6;
+      }
+    }
   }
   return {
     get Diary() {
@@ -141,7 +177,7 @@ define('common/utils/util',[], function() {
       return ((data === null) ? '' : data.toString());
     }
     var buffer = [];
-    for (var name = void 0 in data) {
+    for (var name in data) {
       if (!data.hasOwnProperty(name)) {
         continue;
       }
@@ -612,21 +648,57 @@ define('common/services/AuthorizationService',[], function() {
               authorities = new Set((function() {
                 var $__1 = 0,
                     $__2 = [];
-                for (var $__3 = currentUser.authorities[$traceurRuntime.toProperty(Symbol.iterator)](),
-                    $__4 = void 0; !($__4 = $__3.next()).done; ) {
-                  var x = $__4.value;
-                  $__2[$__1++] = x.authority;
+                var $__6 = true;
+                var $__7 = false;
+                var $__8 = undefined;
+                try {
+                  for (var $__4 = void 0,
+                      $__3 = (currentUser.authorities)[$traceurRuntime.toProperty(Symbol.iterator)](); !($__6 = ($__4 = $__3.next()).done); $__6 = true) {
+                    var x = $__4.value;
+                    $__2[$__1++] = x.authority;
+                  }
+                } catch ($__9) {
+                  $__7 = true;
+                  $__8 = $__9;
+                } finally {
+                  try {
+                    if (!$__6 && $__3.return != null) {
+                      $__3.return();
+                    }
+                  } finally {
+                    if ($__7) {
+                      throw $__8;
+                    }
+                  }
                 }
                 return $__2;
               }()));
               intersection = (function() {
                 var $__1 = 0,
                     $__2 = [];
-                for (var $__3 = authorizedRoles[$traceurRuntime.toProperty(Symbol.iterator)](),
-                    $__4 = void 0; !($__4 = $__3.next()).done; ) {
-                  var x = $__4.value;
-                  if (authorities.has(x))
-                    $__2[$__1++] = x;
+                var $__6 = true;
+                var $__7 = false;
+                var $__8 = undefined;
+                try {
+                  for (var $__4 = void 0,
+                      $__3 = (authorizedRoles)[$traceurRuntime.toProperty(Symbol.iterator)](); !($__6 = ($__4 = $__3.next()).done); $__6 = true) {
+                    var x = $__4.value;
+                    if (authorities.has(x))
+                      $__2[$__1++] = x;
+                  }
+                } catch ($__9) {
+                  $__7 = true;
+                  $__8 = $__9;
+                } finally {
+                  try {
+                    if (!$__6 && $__3.return != null) {
+                      $__3.return();
+                    }
+                  } finally {
+                    if ($__7) {
+                      throw $__8;
+                    }
+                  }
                 }
                 return $__2;
               }());
@@ -704,7 +776,7 @@ define('common/elements/Directive',[], function() {
       this.$ = scope;
       this.element = element;
       this.attrs = attrs;
-      for (var prop = void 0 in this) {
+      for (var prop in this) {
         if (typeof this[prop] === 'function' && prop !== "link") {
           this.$[prop] = this[prop].bind(this);
         }
@@ -3730,24 +3802,30 @@ define("stomp-websocket", function(){});
 
 define('utils/Enum',[], function() {
   
-  var EnumSymbol = function EnumSymbol(name, $__6, value) {
-    var value = $__6.value;
-    this.name = name;
-    this.value = (value !== undefined) ? value : Symbol(name);
-    delete arguments[1].value;
-    Object.assign(this, arguments[1]);
+  var EnumSymbol = function EnumSymbol(name, $__11) {
+    var $__12 = $__11,
+        value = $__12.value,
+        description = $__12.description;
+    this.sym = Symbol.for(name);
+    if (!Object.is(value, undefined))
+      this.value = value;
+    if (description)
+      this.description = description;
     Object.freeze(this);
   };
   ($traceurRuntime.createClass)(EnumSymbol, {
+    get display() {
+      return this.description || Symbol.keyFor(this.sym);
+    },
     toString: function() {
-      return this.name;
+      return this.sym;
     },
     valueOf: function() {
       return this.value;
     }
   }, {});
   Object.defineProperty(EnumSymbol, "parameters", {get: function() {
-      return [[$traceurRuntime.type.string], [], [$traceurRuntime.type.number]];
+      return [[$traceurRuntime.type.string], []];
     }});
   var Enum = function Enum(enumLiterals) {
     for (var key in enumLiterals) {
@@ -3763,10 +3841,28 @@ define('utils/Enum',[], function() {
       return (function() {
         var $__1 = 0,
             $__2 = [];
-        for (var $__4 = Object.keys($__3)[$traceurRuntime.toProperty(Symbol.iterator)](),
-            $__5 = void 0; !($__5 = $__4.next()).done; ) {
-          var key = $__5.value;
-          $__2[$__1++] = $__3[key];
+        var $__7 = true;
+        var $__8 = false;
+        var $__9 = undefined;
+        try {
+          for (var $__5 = void 0,
+              $__4 = (Object.keys($__3))[$traceurRuntime.toProperty(Symbol.iterator)](); !($__7 = ($__5 = $__4.next()).done); $__7 = true) {
+            var key = $__5.value;
+            $__2[$__1++] = $__3[key];
+          }
+        } catch ($__10) {
+          $__8 = true;
+          $__9 = $__10;
+        } finally {
+          try {
+            if (!$__7 && $__4.return != null) {
+              $__4.return();
+            }
+          } finally {
+            if ($__8) {
+              throw $__9;
+            }
+          }
         }
         return $__2;
       }());
@@ -3777,7 +3873,7 @@ define('utils/Enum',[], function() {
     contains: function(sym) {
       if (!(sym instanceof EnumSymbol))
         return false;
-      return this[sym.name] === sym;
+      return this[Symbol.keyFor(sym.sym)] === sym;
     }
   }, {});
   return {
@@ -5805,8 +5901,8 @@ define("harmony-reflect", (function (global) {
 
 define('resiliency/Retry',["../utils/Enum", "harmony-reflect"], function($__0,$__2) {
   
-  var $__9,
-      $__10;
+  var $__14,
+      $__15;
   if (!$__0 || !$__0.__esModule)
     $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
@@ -5815,50 +5911,61 @@ define('resiliency/Retry',["../utils/Enum", "harmony-reflect"], function($__0,$_
       EnumSymbol = $__1.EnumSymbol,
       Enum = $__1.Enum;
   var Reflect = $__2.default;
-  var $__8 = [{}, {}, {}],
-      INCREMENTAL = ($__9 = $__8[$traceurRuntime.toProperty(Symbol.iterator)](), ($__10 = $__9.next()).done ? void 0 : $__10.value),
-      EXPONENTIAL = ($__10 = $__9.next()).done ? void 0 : $__10.value,
-      FIBONACCI = ($__10 = $__9.next()).done ? void 0 : $__10.value;
+  var $__13 = [{}, {}, {}],
+      INCREMENTAL = ($__14 = $__13[$traceurRuntime.toProperty(Symbol.iterator)](), ($__15 = $__14.next()).done ? void 0 : $__15.value),
+      EXPONENTIAL = ($__15 = $__14.next()).done ? void 0 : $__15.value,
+      FIBONACCI = ($__15 = $__14.next()).done ? void 0 : $__15.value;
   var BackoffStrategy = new Enum({
     INCREMENTAL: INCREMENTAL,
     EXPONENTIAL: EXPONENTIAL,
     FIBONACCI: FIBONACCI
   });
-  var Retry = function Retry($__11) {
-    var $__13,
-        $__14,
-        $__15,
-        $__16,
-        $__17;
-    var $__12 = $__11,
-        maxTries = ($__13 = $__12.maxTries) === void 0 ? 1 : $__13,
-        maxDelay = ($__14 = $__12.maxDelay) === void 0 ? Infinity : $__14,
-        delayRatio = ($__15 = $__12.delayRatio) === void 0 ? 1 : $__15,
-        backoffStrategy = ($__16 = $__12.backoffStrategy) === void 0 ? BackoffStrategy.INCREMENTAL : $__16,
-        intermediate = ($__17 = $__12.intermediate) === void 0 ? function() {} : $__17;
-    this.maxTries = maxTries;
-    this.maxDelay = maxDelay;
-    this.delayRatio = delayRatio;
-    this.intermediate = intermediate;
-    switch (backoffStrategy) {
+  var Retry = function Retry($__16) {
+    var $__17 = $__16,
+        maxTries = $__17.maxTries,
+        maxDelay = $__17.maxDelay,
+        delayRatio = $__17.delayRatio,
+        backoffStrategy = $__17.backoffStrategy,
+        intermediate = $__17.intermediate;
+    this.maxTries = 1;
+    this.maxDelay = Infinity;
+    this.delayRatio = 1;
+    this.backoffStrategy = BackoffStrategy.INCREMENTAL;
+    this.intermediate = function() {};
+    if (maxTries)
+      this.maxTries = maxTries;
+    if (maxDelay)
+      this.maxDelay = maxDelay;
+    if (delayRatio)
+      this.delayRatio = delayRatio;
+    if (backoffStrategy) {
+      if (BackoffStrategy.contains(backoffStrategy)) {
+        this.backoffStrategy = backoffStrategy;
+      } else {
+        throw Error('backoffStrategy value should be of EnumSymbol<BackoffStrategy>  type');
+      }
+    }
+    if (intermediate)
+      this.intermediate = intermediate;
+    switch (this.backoffStrategy) {
       case BackoffStrategy.INCREMENTAL:
-        this.backoffStrategy = this.incremental();
+        this._backoffStrategy = this.incremental();
         break;
       case BackoffStrategy.EXPONENTIAL:
-        this.backoffStrategy = this.exponential();
+        this._backoffStrategy = this.exponential();
         break;
       case BackoffStrategy.FIBONACCI:
-        this.backoffStrategy = this.fibonacci();
+        this._backoffStrategy = this.fibonacci();
         break;
       default:
-        this.backoffStrategy = this.incremental();
+        this._backoffStrategy = this.incremental();
         break;
     }
   };
   var $Retry = Retry;
   ($traceurRuntime.createClass)(Retry, {
     try: function(target, receiver) {
-      var $__20,
+      var $__25,
           args,
           intermediate,
           remainingTries,
@@ -5880,7 +5987,7 @@ define('resiliency/Retry',["../utils/Enum", "harmony-reflect"], function($__0,$_
               Promise.resolve(this._sleep(delay * 1000)).then($ctx.createCallback(2), $ctx.errback);
               return ;
             case 2:
-              $ctx.returnValue = ($__20 = target).call.apply($__20, $traceurRuntime.spread([receiver], args)).catch((function(error) {
+              $ctx.returnValue = ($__25 = target).call.apply($__25, $traceurRuntime.spread([receiver], args)).catch((function(error) {
                 var intermediateResult = intermediate(error, remainingTries, delay);
                 if (remainingTries <= 1) {
                   throw new Error('Giving up! maximum retry attempts reached.');
@@ -5902,7 +6009,7 @@ define('resiliency/Retry',["../utils/Enum", "harmony-reflect"], function($__0,$_
       }, this);
     },
     _calculateDelay: function(remainingTries) {
-      var delay = this.delayRatio * this.backoffStrategy.next().value;
+      var delay = this.delayRatio * this._backoffStrategy.next().value;
       return Math.min(delay, this.maxDelay);
     },
     _sleep: function(ms) {
@@ -5910,7 +6017,7 @@ define('resiliency/Retry',["../utils/Enum", "harmony-reflect"], function($__0,$_
         setTimeout(resolve, ms);
       }));
     },
-    incremental: $traceurRuntime.initGeneratorFunction(function $__22() {
+    incremental: $traceurRuntime.initGeneratorFunction(function $__27() {
       var i,
           reset;
       return $traceurRuntime.createGeneratorInstance(function($ctx) {
@@ -5943,9 +6050,9 @@ define('resiliency/Retry',["../utils/Enum", "harmony-reflect"], function($__0,$_
             default:
               return $ctx.end();
           }
-      }, $__22, this);
+      }, $__27, this);
     }),
-    exponential: $traceurRuntime.initGeneratorFunction(function $__23() {
+    exponential: $traceurRuntime.initGeneratorFunction(function $__28() {
       var i,
           reset;
       return $traceurRuntime.createGeneratorInstance(function($ctx) {
@@ -5978,18 +6085,18 @@ define('resiliency/Retry',["../utils/Enum", "harmony-reflect"], function($__0,$_
             default:
               return $ctx.end();
           }
-      }, $__23, this);
+      }, $__28, this);
     }),
-    fibonacci: $traceurRuntime.initGeneratorFunction(function $__24() {
-      var $__12,
-          $__13,
-          $__14,
-          $__15,
-          $__16,
-          $__17,
+    fibonacci: $traceurRuntime.initGeneratorFunction(function $__29() {
+      var $__17,
           $__18,
           $__19,
-          $__11,
+          $__20,
+          $__21,
+          $__22,
+          $__23,
+          $__24,
+          $__16,
           prev,
           curr,
           reset;
@@ -5997,14 +6104,14 @@ define('resiliency/Retry',["../utils/Enum", "harmony-reflect"], function($__0,$_
         while (true)
           switch ($ctx.state) {
             case 0:
-              $__11 = [0, 1], prev = ($__12 = $__11[$traceurRuntime.toProperty(Symbol.iterator)](), ($__13 = $__12.next()).done ? void 0 : $__13.value), curr = ($__13 = $__12.next()).done ? void 0 : $__13.value;
+              $__16 = [0, 1], prev = ($__17 = $__16[$traceurRuntime.toProperty(Symbol.iterator)](), ($__18 = $__17.next()).done ? void 0 : $__18.value), curr = ($__18 = $__17.next()).done ? void 0 : $__18.value;
               $ctx.state = 11;
               break;
             case 11:
               $ctx.state = (true) ? 5 : -2;
               break;
             case 5:
-              ($__14 = [curr, prev + curr], prev = ($__15 = $__14[$traceurRuntime.toProperty(Symbol.iterator)](), ($__16 = $__15.next()).done ? void 0 : $__16.value), curr = ($__16 = $__15.next()).done ? void 0 : $__16.value, $__14);
+              ($__19 = [curr, prev + curr], prev = ($__20 = $__19[$traceurRuntime.toProperty(Symbol.iterator)](), ($__21 = $__20.next()).done ? void 0 : $__21.value), curr = ($__21 = $__20.next()).done ? void 0 : $__21.value, $__19);
               $ctx.state = 6;
               break;
             case 6:
@@ -6016,14 +6123,14 @@ define('resiliency/Retry',["../utils/Enum", "harmony-reflect"], function($__0,$_
               break;
             case 4:
               if (reset) {
-                ($__17 = [0, 1], prev = ($__18 = $__17[$traceurRuntime.toProperty(Symbol.iterator)](), ($__19 = $__18.next()).done ? void 0 : $__19.value), curr = ($__19 = $__18.next()).done ? void 0 : $__19.value, $__17);
+                ($__22 = [0, 1], prev = ($__23 = $__22[$traceurRuntime.toProperty(Symbol.iterator)](), ($__24 = $__23.next()).done ? void 0 : $__24.value), curr = ($__24 = $__23.next()).done ? void 0 : $__24.value, $__22);
               }
               $ctx.state = 11;
               break;
             default:
               return $ctx.end();
           }
-      }, $__24, this);
+      }, $__29, this);
     })
   }, {proxify: function(obj) {
       var classRetry;
@@ -6038,12 +6145,30 @@ define('resiliency/Retry',["../utils/Enum", "harmony-reflect"], function($__0,$_
       for (var name in obj.__proto__) {
         var methodRetry = undefined;
         if (obj[name].annotations) {
-          for (var $__6 = obj[name].annotations[$traceurRuntime.toProperty(Symbol.iterator)](),
-              $__7 = void 0; !($__7 = $__6.next()).done; ) {
-            var anno$__21 = $__7.value;
-            {
-              if (anno$__21 instanceof $Retry) {
-                methodRetry = anno$__21;
+          var $__9 = true;
+          var $__10 = false;
+          var $__11 = undefined;
+          try {
+            for (var $__7 = void 0,
+                $__6 = (obj[name].annotations)[$traceurRuntime.toProperty(Symbol.iterator)](); !($__9 = ($__7 = $__6.next()).done); $__9 = true) {
+              var anno$__26 = $__7.value;
+              {
+                if (anno$__26 instanceof $Retry) {
+                  methodRetry = anno$__26;
+                }
+              }
+            }
+          } catch ($__12) {
+            $__10 = true;
+            $__11 = $__12;
+          } finally {
+            try {
+              if (!$__9 && $__6.return != null) {
+                $__6.return();
+              }
+            } finally {
+              if ($__10) {
+                throw $__11;
               }
             }
           }

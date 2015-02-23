@@ -108,6 +108,8 @@ experiments/controllers/ExperimentController.js
 experiments/controllers/ElementsController.js
 experiments/controllers/GrowlTranslateDemoController.js
 experiments/controllers/IoTController.js
+reactive/Observable.js
+experiments/controllers/AsyncController.js
 experiments/elements/myElement/MyElement.js
 experiments/elements/customButton/CustomButton.js
 experiments/elements/myNews/MyNews.js
@@ -205,6 +207,8 @@ experiments/controllers/ExperimentController.js
 experiments/controllers/ElementsController.js
 experiments/controllers/GrowlTranslateDemoController.js
 experiments/controllers/IoTController.js
+reactive/Observable.js
+experiments/controllers/AsyncController.js
 common/utils/util.js
 experiments/elements/myElement/MyElement.js
 experiments/elements/customButton/CustomButton.js
