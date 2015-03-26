@@ -55396,25 +55396,25 @@ define('test.env',["angular-mocks", "text!../test/fixtures/user/sumo_profile.jso
     console.log('in testEnvModule... ');
     $httpBackend.whenPOST(/\http:\/\/apsrd3850:8080\/apiApp\/j_spring_security_check/).respond((function(method, url, data, headers) {
       console.log('Received data', method, url, data, headers);
-      if (data.contains('j_username=sumo&j_password=demo')) {
+      if (data.includes('j_username=sumo&j_password=demo')) {
         window.username = 'sumo';
         return [200, {
           success: true,
           username: 'sumo'
         }];
-      } else if (data.contains('j_username=businessadmin&j_password=businessadmin')) {
+      } else if (data.includes('j_username=businessadmin&j_password=businessadmin')) {
         window.username = 'businessadmin';
         return [200, {
           success: true,
           username: 'businessadmin'
         }];
-      } else if (data.contains('j_username=itadmin&j_password=itadmin')) {
+      } else if (data.includes('j_username=itadmin&j_password=itadmin')) {
         window.username = 'itadmin';
         return [200, {
           success: true,
           username: 'itadmin'
         }];
-      } else if (data.contains('j_username=dataadmin&j_password=dataadmin')) {
+      } else if (data.includes('j_username=dataadmin&j_password=dataadmin')) {
         window.username = 'dataadmin';
         return [200, {
           success: true,
@@ -55448,9 +55448,9 @@ define('test.env',["angular-mocks", "text!../test/fixtures/user/sumo_profile.jso
       if (!window.username) {
         return [401, {message: 'authentication required'}];
       }
-      if (url.contains('offset=0')) {
+      if (url.includes('offset=0')) {
         return [200, require('text!../test/fixtures/drug/drugs_0.json')];
-      } else if (url.contains('offset=100')) {
+      } else if (url.includes('offset=100')) {
         return [200, require('text!../test/fixtures/drug/drugs_100.json')];
       } else {
         return [200, require('text!../test/fixtures/drug/drugs_0.json')];
@@ -55466,9 +55466,9 @@ define('test.env',["angular-mocks", "text!../test/fixtures/user/sumo_profile.jso
     }));
     $httpBackend.whenGET(/http:\/\/apsed2427:8080\/api\/providers\?facets*/).respond((function(method, url) {
       console.log('url', url);
-      if (url.contains('offset=0')) {
+      if (url.includes('offset=0')) {
         return [200, require('text!../test/fixtures/provider/providers_0.json')];
-      } else if (url.contains('offset=100')) {
+      } else if (url.includes('offset=100')) {
         return [200, require('text!../test/fixtures/provider/providers_100.json')];
       } else {
         return [200, require('text!../test/fixtures/provider/providers_0.json')];

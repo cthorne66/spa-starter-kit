@@ -3215,7 +3215,7 @@ define("angular-growl-v2", ["angular"], function(){});
 /**
 * @author Jason Dobry <jason.dobry@gmail.com>
 * @file angular-cache.js
-* @version 3.2.4 - Homepage <https://github.com/jmdobry/angular-cache>
+* @version 3.2.5 - Homepage <https://github.com/jmdobry/angular-cache>
 * @copyright (c) 2013-2014 Jason Dobry <http://www.pseudobry.com>
 * @license MIT <https://github.com/jmdobry/angular-cache/blob/master/LICENSE>
 *
@@ -4600,7 +4600,7 @@ module.exports = function removeExpired() {
   var key;
   var expiredItem;
 
-  while ((expiredItem = _this.$$expiresHeap.peek()) && expiredItem.expires < now) {
+  while ((expiredItem = _this.$$expiresHeap.peek()) && expiredItem.expires <= now) {
     expired[expiredItem.key] = expiredItem.value ? expiredItem.value : null;
     _this.$$expiresHeap.pop();
   }
@@ -5018,7 +5018,7 @@ module.exports = function setRecycleFreq(recycleFreq) {
 },{}],18:[function(require,module,exports){
 var defaults = require('../defaults');
 var DSCache = require('../DSCache');
-var version = '3.2.4';
+var version = '3.2.5';
 
 /**
  * @doc function
@@ -5698,7 +5698,7 @@ module.exports = {
    * @id angular-cache
    * @name Overview
    * @description
-   * __Version:__ 3.2.4
+   * __Version:__ 3.2.5
    *
    * ## Install
    *
@@ -5718,7 +5718,7 @@ module.exports = {
    * also consumable by Browserify and you should be able to `require('angular-cache')`. The `main` file is `src/index.js`.
    *
    * #### Manual download
-   * Download angular-cache.3.2.4.js from the [Releases](https://github.com/jmdobry/angular-cache/releases)
+   * Download angular-cache.3.2.5.js from the [Releases](https://github.com/jmdobry/angular-cache/releases)
    * section of the angular-cache GitHub project.
    *
    * ## Load into Angular
@@ -5789,7 +5789,7 @@ define("angular-cache", ["angular"], function(){});
  * angular-ui-bootstrap
  * http://angular-ui.github.io/bootstrap/
 
- * Version: 0.12.0 - 2014-11-16
+ * Version: 0.12.1 - 2015-02-20
  * License: MIT
  */
 angular.module("ui.bootstrap", ["ui.bootstrap.tpls", "ui.bootstrap.transition","ui.bootstrap.collapse","ui.bootstrap.accordion","ui.bootstrap.alert","ui.bootstrap.bindHtml","ui.bootstrap.buttons","ui.bootstrap.carousel","ui.bootstrap.dateparser","ui.bootstrap.position","ui.bootstrap.datepicker","ui.bootstrap.dropdown","ui.bootstrap.modal","ui.bootstrap.pagination","ui.bootstrap.tooltip","ui.bootstrap.popover","ui.bootstrap.progressbar","ui.bootstrap.rating","ui.bootstrap.tabs","ui.bootstrap.timepicker","ui.bootstrap.typeahead"]);
@@ -8399,14 +8399,7 @@ angular.module( 'ui.bootstrap.tooltip', [ 'ui.bootstrap.position', 'ui.bootstrap
 
               // Set the initial positioning.
               tooltip.css({ top: 0, left: 0, display: 'block' });
-
-              // Now we add it to the DOM because need some info about it. But it's not
-              // visible yet anyway.
-              if ( appendToBody ) {
-                  $document.find( 'body' ).append( tooltip );
-              } else {
-                element.after( tooltip );
-              }
+              ttScope.$digest();
 
               positionTooltip();
 
@@ -8446,7 +8439,13 @@ angular.module( 'ui.bootstrap.tooltip', [ 'ui.bootstrap.position', 'ui.bootstrap
                 removeTooltip();
               }
               tooltipLinkedScope = ttScope.$new();
-              tooltip = tooltipLinker(tooltipLinkedScope, angular.noop);
+              tooltip = tooltipLinker(tooltipLinkedScope, function (tooltip) {
+                if ( appendToBody ) {
+                  $document.find( 'body' ).append( tooltip );
+                } else {
+                  element.after( tooltip );
+                }
+              });
             }
 
             function removeTooltip() {
@@ -14287,7 +14286,7 @@ angular.module('truncate', [])
 define("angular-truncate", ["angular"], function(){});
 
 /*!
- * angular-translate - v2.6.0 - 2015-02-08
+ * angular-translate - v2.6.1 - 2015-03-01
  * http://github.com/angular-translate/angular-translate
  * Copyright (c) 2015 ; Licensed MIT
  */
@@ -14363,7 +14362,7 @@ angular.module('pascalprecht.translate').provider('$translate', ['$STORAGE_KEY',
       loaderCache,
       directivePriority = 0;
 
-  var version = '2.6.0';
+  var version = '2.6.1';
 
   // tries to determine the browsers language
   var getFirstBrowserLanguage = function () {
@@ -15648,7 +15647,12 @@ angular.module('pascalprecht.translate').provider('$translate', ['$STORAGE_KEY',
       var determineTranslationInstant = function (translationId, interpolateParams, interpolationId) {
 
         var result, table = $uses ? $translationTable[$uses] : $translationTable,
-            Interpolator = (interpolationId) ? interpolatorHashMap[interpolationId] : defaultInterpolator;
+            Interpolator = defaultInterpolator;
+
+        // if the interpolation id exists use custom interpolator
+        if (interpolatorHashMap && Object.prototype.hasOwnProperty.call(interpolatorHashMap, interpolationId)) {
+          Interpolator = interpolatorHashMap[interpolationId];
+        }
 
         // if the translation id exists, we can just interpolate it
         if (table && Object.prototype.hasOwnProperty.call(table, translationId)) {
@@ -16644,7 +16648,7 @@ angular.module('pascalprecht.translate')
 define("angular-translate", ["angular"], function(){});
 
 /*!
- * angular-translate - v2.6.0 - 2015-02-08
+ * angular-translate - v2.6.1 - 2015-03-01
  * http://github.com/angular-translate/angular-translate
  * Copyright (c) 2015 ; Licensed MIT
  */
@@ -27811,6 +27815,7 @@ app.factory('NgTableParams', ['$q', '$log', 'ngTableDefaults', function($q, $log
             defaultSort: 'desc',
             filterDelay: 750,
             counts: [10, 25, 50, 100],
+            sortingIndicator: 'span',
             getGroups: this.getGroups,
             getData: this.getData
         };
@@ -27831,6 +27836,7 @@ app.factory('NgTableParams', ['$q', '$log', 'ngTableDefaults', function($q, $log
 app.factory('ngTableParams', ['NgTableParams', function(NgTableParams) {
     return NgTableParams;
 }]);
+
 /**
  * ngTable: Table + Angular JS
  *
@@ -28076,6 +28082,7 @@ app.factory('ngTableColumn', [function () {
         buildColumn: buildColumn
     };
 }]);
+
 /**
  * ngTable: Table + Angular JS
  *
@@ -28242,6 +28249,7 @@ app.directive('ngTableDynamic', ['$parse', function ($parse){
         }
     };
 }]);
+
 /**
  * ngTable: Table + Angular JS
  *
@@ -28291,7 +28299,7 @@ angular.module('ngTable').run(['$templateCache', function ($templateCache) {
 	$templateCache.put('ng-table/filters/select-multiple.html', '<select ng-options="data.id as data.title for data in $column.data" ng-disabled="$filterRow.disabled" multiple ng-multiple="true" ng-model="params.filter()[name]" ng-show="filter==\'select-multiple\'" class="filter filter-select-multiple form-control" name="{{name}}"> </select>');
 	$templateCache.put('ng-table/filters/select.html', '<select ng-options="data.id as data.title for data in $column.data" ng-disabled="$filterRow.disabled" ng-model="params.filter()[name]" ng-show="filter==\'select\'" class="filter filter-select form-control" name="{{name}}"> </select>');
 	$templateCache.put('ng-table/filters/text.html', '<input type="text" name="{{name}}" ng-disabled="$filterRow.disabled" ng-model="params.filter()[name]" ng-if="filter==\'text\'" class="input-filter form-control"/>');
-	$templateCache.put('ng-table/header.html', '<tr> <th title="{{$column.headerTitle(this)}}" ng-repeat="$column in $columns" ng-class="{ \'sortable\': $column.sortable(this), \'sort-asc\': params.sorting()[$column.sortable(this)]==\'asc\', \'sort-desc\': params.sorting()[$column.sortable(this)]==\'desc\' }" ng-click="sortBy($column, $event)" ng-show="$column.show(this)" ng-init="template=$column.headerTemplateURL(this)" class="header {{$column.class(this)}}"> <div ng-if="!template" ng-show="!template" ng-bind="$column.title(this)"></div> <div ng-if="template" ng-show="template" ng-include="template"></div> </th> </tr> <tr ng-show="show_filter" class="ng-table-filters"> <th data-title-text="{{$column.titleAlt(this) || $column.title(this)}}" ng-repeat="$column in $columns" ng-show="$column.show(this)" class="filter"> <div ng-repeat="(name, filter) in $column.filter(this)"> <div ng-if="filter.indexOf(\'/\') !==-1" ng-include="filter"></div> <div ng-if="filter.indexOf(\'/\')===-1" ng-include="\'ng-table/filters/\' + filter + \'.html\'"></div> </div> </th> </tr> ');
+	$templateCache.put('ng-table/header.html', '<tr> <th title="{{$column.headerTitle(this)}}" ng-repeat="$column in $columns" ng-class="{ \'sortable\': $column.sortable(this), \'sort-asc\': params.sorting()[$column.sortable(this)]==\'asc\', \'sort-desc\': params.sorting()[$column.sortable(this)]==\'desc\' }" ng-click="sortBy($column, $event)" ng-show="$column.show(this)" ng-init="template=$column.headerTemplateURL(this)" class="header {{$column.class(this)}}"> <div ng-if="!template" ng-show="!template" class="ng-table-header" ng-class="{\'sort-indicator\': params.settings().sortingIndicator==\'div\'}"> <span ng-bind="$column.title(this)" ng-class="{\'sort-indicator\': params.settings().sortingIndicator==\'span\'}"></span> </div> <div ng-if="template" ng-show="template" ng-include="template"></div> </th> </tr> <tr ng-show="show_filter" class="ng-table-filters"> <th data-title-text="{{$column.titleAlt(this) || $column.title(this)}}" ng-repeat="$column in $columns" ng-show="$column.show(this)" class="filter"> <div ng-repeat="(name, filter) in $column.filter(this)"> <div ng-if="filter.indexOf(\'/\') !==-1" ng-include="filter"></div> <div ng-if="filter.indexOf(\'/\')===-1" ng-include="\'ng-table/filters/\' + filter + \'.html\'"></div> </div> </th> </tr> ');
 	$templateCache.put('ng-table/pager.html', '<div class="ng-cloak ng-table-pager" ng-if="params.data.length"> <div ng-if="params.settings().counts.length" class="ng-table-counts btn-group pull-right"> <button ng-repeat="count in params.settings().counts" type="button" ng-class="{\'active\':params.count()==count}" ng-click="params.count(count)" class="btn btn-default"> <span ng-bind="count"></span> </button> </div> <ul class="pagination ng-table-pagination"> <li ng-class="{\'disabled\': !page.active && !page.current, \'active\': page.current}" ng-repeat="page in pages" ng-switch="page.type"> <a ng-switch-when="prev" ng-click="params.page(page.number)" href="">&laquo;</a> <a ng-switch-when="first" ng-click="params.page(page.number)" href=""><span ng-bind="page.number"></span></a> <a ng-switch-when="page" ng-click="params.page(page.number)" href=""><span ng-bind="page.number"></span></a> <a ng-switch-when="more" ng-click="params.page(page.number)" href="">&#8230;</a> <a ng-switch-when="last" ng-click="params.page(page.number)" href=""><span ng-bind="page.number"></span></a> <a ng-switch-when="next" ng-click="params.page(page.number)" href="">&raquo;</a> </li> </ul> </div> ');
 }]);
     return app;
@@ -56686,19 +56694,28 @@ angular.module('ui.router.tabs').directive('tabs', ['$rootScope', '$state',
         function($scope) {
 
           if (!$scope.tabs) {
-            throw new Error('\'data\' attribute not defined, please check documentation for how to use this directive.');
+            throw new Error('UI Router Tabs: \'data\' attribute not defined, please check documentation for how to use this directive.');
           }
 
           if (!angular.isArray($scope.tabs)) {
-            throw new Error('\'data\' attribute must be an array of tab data with at least one tab defined.');
+            throw new Error('UI Router Tabs: \'data\' attribute must be an array of tab data with at least one tab defined.');
           }
 
-          $scope.go = function(route, params, options) {
-            $state.go(route, params, options);
+          var currentStateEqualTo = function(route, params, options) {
+            var isEqual = $state.is(route, params, options);
+            return isEqual;
           };
 
-          $scope.active = function(route, params, options) {
-            var isAncestorOfCurrentRoute = $state.includes(route, params, options);
+          $scope.go = function(route, params, options) {
+
+            if (!currentStateEqualTo(route, params, options)) {
+              $state.go(route, params, options);
+            }
+          };
+
+          /* whether to highlight given route as part of the current state */
+          $scope.active = function(tab) {
+            var isAncestorOfCurrentRoute = $state.includes(tab.route, tab.params, tab.options);
             return isAncestorOfCurrentRoute;
           };
 
@@ -56706,9 +56723,10 @@ angular.module('ui.router.tabs').directive('tabs', ['$rootScope', '$state',
 
             // sets which tab is active (used for highlighting)
             angular.forEach($scope.tabs, function(tab) {
+
               tab.params = tab.params || {};
               tab.options = tab.options || {};
-              tab.active = $scope.active(tab.route, tab.params, tab.options);
+              tab.active = $scope.active(tab);
 
               if (tab.active) {
                 $scope.current_tab = tab;
@@ -56720,14 +56738,10 @@ angular.module('ui.router.tabs').directive('tabs', ['$rootScope', '$state',
           $scope.update_tabs();
 
           // if none are active, set the default
-          $scope.current_tab = $scope.current_tab || $scope.tabs[0];
-          $scope.go($scope.current_tab.route, $scope.current_tab.params, $scope.current_tab.options);
-
-          $scope.changeTab = function(tab) {
-            if (tab.route !== $scope.current_tab.route) {
-              $scope.go(tab.route, tab.params, tab.options);
-            }
-          };
+          if (!$scope.current_tab) {
+            $scope.current_tab = $scope.tabs[0];
+            $scope.go($scope.current_tab.route, $scope.current_tab.params, $scope.current_tab.options);
+          }
     }],
       templateUrl: function(element, attributes) {
         return attributes.templateUrl || 'ui-router-tabs-default-template.html';
@@ -56737,7 +56751,8 @@ angular.module('ui.router.tabs').directive('tabs', ['$rootScope', '$state',
   function($templateCache) {
     var DEFAULT_TEMPLATE = '<div>' +
       '<tabset class="tab-container" type="{{type}}" vertical="{{vertical}}" justified="{{justified}}">' +
-      '  <tab class="tab" ng-repeat="tab in tabs" heading="{{tab.heading}}" active="tab.active" ng-click="changeTab(tab)" />' +
+      '  <tab class="tab" ng-repeat="tab in tabs" heading="{{tab.heading}}" active="tab.active" ng-click="go(tab.route, tab.params, tab.options)">' +
+      '  </tab>' +
       '</tabset>' +
       '</div>';
 
